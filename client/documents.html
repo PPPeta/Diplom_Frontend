@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Документы — Кабинет клиента</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="client" data-page="documents" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Документы</h1><p class="page-sub">Договоры, счета и акты по вашим заказам.</p></div><button class="btn btn-primary" data-toast="Загрузка документов скоро будет доступна" data-toast-type="error">Загрузить</button></div>
+  <div class="filters">
+    <div class="chips"><span class="chip active">Все</span><span class="chip">Договоры</span><span class="chip">Счета</span><span class="chip">Акты</span></div>
+    <div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск по документу…"></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Документ</th><th>Заказ</th><th>Дата</th><th>Тип</th><th>Статус</th><th></th></tr></thead>
+      <tbody>
+        <tr><td class="t-strong">📄 Договор № 1042</td><td>#1042</td><td>12.05.2026</td><td><span class="badge badge--blue">Договор</span></td><td><span class="badge badge--green">Подписан</span></td><td><button class="btn btn-sm" data-toast="Документ скачан" data-toast-type="success">Скачать</button></td></tr>
+        <tr><td class="t-strong">🧾 Счёт № 1042-1</td><td>#1042</td><td>12.05.2026</td><td><span class="badge badge--amber">Счёт</span></td><td><span class="badge badge--red">К оплате</span></td><td><button class="btn btn-sm" data-toast="Документ скачан" data-toast-type="success">Скачать</button></td></tr>
+        <tr><td class="t-strong">📄 Договор № 1021</td><td>#1021</td><td>21.04.2026</td><td><span class="badge badge--blue">Договор</span></td><td><span class="badge badge--green">Подписан</span></td><td><button class="btn btn-sm" data-toast="Документ скачан" data-toast-type="success">Скачать</button></td></tr>
+        <tr><td class="t-strong">✅ Акт № 1021</td><td>#1021</td><td>28.04.2026</td><td><span class="badge badge--gray">Акт</span></td><td><span class="badge badge--green">Закрыт</span></td><td><button class="btn btn-sm" data-toast="Документ скачан" data-toast-type="success">Скачать</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notice mt">💡 Подписанные документы хранятся бессрочно и доступны для скачивания в любое время.</div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

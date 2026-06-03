@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Платежи и счета — Панель сотрудника</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="staff" data-page="payments" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Платежи и счета</h1><p class="page-sub">Учёт оплат по заказам.</p></div><button class="btn btn-primary" data-toast="Выставление счёта (скоро)" data-toast-type="error">+ Выставить счёт</button></div>
+  <div class="grid g-4">
+    <div class="stat"><div class="lbl"><span class="ic">💰</span> Ожидают оплаты</div><div class="num">86 500 ₽</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">✅</span> Оплачено за месяц</div><div class="num">412 000 ₽</div><div class="delta up">+8%</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">⏰</span> Просрочено</div><div class="num">15 000 ₽</div><div class="delta down">2 счёта</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">🧾</span> Счетов всего</div><div class="num">34</div></div>
+  </div>
+  <div class="table-wrap mt">
+    <table>
+      <thead><tr><th>Счёт</th><th>Заказ</th><th>Клиент</th><th>Сумма</th><th>Срок</th><th>Статус</th></tr></thead>
+      <tbody>
+        <tr><td class="t-strong">№ 1042-1</td><td>#1042</td><td>А. Морозова</td><td class="t-mono">12 000 ₽</td><td>15.05</td><td><span class="badge badge--amber">Ожидает</span></td></tr>
+        <tr><td class="t-strong">№ 1040-1</td><td>#1040</td><td>К. Иванова</td><td class="t-mono">15 000 ₽</td><td>10.05</td><td><span class="badge badge--red">Просрочен</span></td></tr>
+        <tr><td class="t-strong">№ 1037-2</td><td>#1037</td><td>Г. Лебедев</td><td class="t-mono">28 000 ₽</td><td>08.05</td><td><span class="badge badge--green">Оплачен</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

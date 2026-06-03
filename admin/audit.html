@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Аудит лог — Администрирование</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="admin" data-page="audit" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Аудит лог</h1><p class="page-sub">Журнал действий пользователей в системе.</p></div><button class="btn" data-toast="Экспорт журнала (скоро)" data-toast-type="error">Экспорт</button></div>
+  <div class="filters"><div class="search"><input class="input" placeholder="Поиск по событию…"></div><select class="input"><option>Все пользователи</option><option>И. Сафронов</option><option>Админ</option></select><input class="input" type="date"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Время</th><th>Пользователь</th><th>Действие</th><th>Объект</th><th>IP</th></tr></thead>
+      <tbody>
+        <tr><td class="t-mono">12.05 10:42</td><td>И. Сафронов</td><td>Изменил статус заказа</td><td>#1042</td><td class="t-muted">192.168.0.14</td></tr>
+        <tr><td class="t-mono">12.05 10:24</td><td>А. Морозова</td><td>Создала заказ</td><td>#1042</td><td class="t-muted">85.140.2.7</td></tr>
+        <tr><td class="t-mono">12.05 09:12</td><td>Админ</td><td>Заблокировал пользователя</td><td>Д. Соколов</td><td class="t-muted">192.168.0.1</td></tr>
+        <tr><td class="t-mono">11.05 18:40</td><td>М. Крылова</td><td>Выставила счёт</td><td>№ 1040-1</td><td class="t-muted">192.168.0.22</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

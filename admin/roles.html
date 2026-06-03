@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Роли и права — Администрирование</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="admin" data-page="roles" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Роли и права</h1><p class="page-sub">Матрица доступа по ролям системы.</p></div><button class="btn btn-primary" data-toast="Создание роли (скоро)" data-toast-type="error">+ Роль</button></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Раздел / действие</th><th>Гость</th><th>Клиент</th><th>Менеджер</th><th>Исполнитель</th><th>Админ</th></tr></thead>
+      <tbody>
+        <tr><td class="t-strong">Просмотр каталога</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        <tr><td class="t-strong">Оформление заказа</td><td class="t-muted">—</td><td>✅</td><td>✅</td><td class="t-muted">—</td><td>✅</td></tr>
+        <tr><td class="t-strong">Реестр заказов</td><td class="t-muted">—</td><td class="t-muted">—</td><td>✅</td><td><span class="t-muted">частично</span></td><td>✅</td></tr>
+        <tr><td class="t-strong">Назначение задач</td><td class="t-muted">—</td><td class="t-muted">—</td><td>✅</td><td class="t-muted">—</td><td>✅</td></tr>
+        <tr><td class="t-strong">Управление пользователями</td><td class="t-muted">—</td><td class="t-muted">—</td><td class="t-muted">—</td><td class="t-muted">—</td><td>✅</td></tr>
+        <tr><td class="t-strong">Настройки системы</td><td class="t-muted">—</td><td class="t-muted">—</td><td class="t-muted">—</td><td class="t-muted">—</td><td>✅</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notice mt">💡 Изменение прав вступает в силу немедленно для всех пользователей роли.</div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

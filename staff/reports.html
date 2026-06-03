@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Отчёты — Панель сотрудника</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="staff" data-page="reports" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Отчёты</h1><p class="page-sub">Аналитика по заказам и выручке.</p></div><div class="quick-actions"><select class="input"><option>За месяц</option><option>За квартал</option><option>За год</option></select><button class="btn" data-toast="Экспорт отчёта (скоро)" data-toast-type="error">Экспорт</button></div></div>
+  <div class="grid g-4">
+    <div class="stat"><div class="lbl"><span class="ic">📑</span> Заказов</div><div class="num">128</div><div class="delta up">+12%</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">💰</span> Выручка</div><div class="num">1 240 000 ₽</div><div class="delta up">+8%</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">✅</span> Завершено</div><div class="num">112</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">⏱️</span> Средний срок</div><div class="num">3,4 дн</div></div>
+  </div>
+  <div class="cols mt">
+    <div class="card">
+      <div class="card-h"><h3>Выручка по месяцам</h3></div>
+      <div class="grid" style="gap:8px">
+        <div class="list-row"><span>Март</span><b class="t-mono">980 000 ₽</b></div>
+        <div class="list-row"><span>Апрель</span><b class="t-mono">1 150 000 ₽</b></div>
+        <div class="list-row"><span>Май</span><b class="t-mono">1 240 000 ₽</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>Популярные услуги</h3></div>
+      <div class="list-row"><span>Полный цикл</span><span class="badge badge--green">48%</span></div>
+      <div class="list-row"><span>Транспорт</span><span class="badge badge--blue">27%</span></div>
+      <div class="list-row"><span>Документы</span><span class="badge badge--amber">15%</span></div>
+      <div class="list-row"><span>Прочее</span><span class="badge badge--gray">10%</span></div>
+    </div>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

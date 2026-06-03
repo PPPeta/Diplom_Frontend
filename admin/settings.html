@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Настройки — Администрирование</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="admin" data-page="settings" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Настройки</h1><p class="page-sub">Параметры системы и организации.</p></div></div>
+  <div class="cols">
+    <form class="card" onsubmit="event.preventDefault(); window.toast('Настройки сохранены','success');">
+      <h3>Организация</h3>
+      <div class="form mt-sm">
+        <div class="field"><label for="s-name">Название</label><input id="s-name" value="Бюро «Вечная Память»"></div>
+        <div class="form-row">
+          <div class="field"><label for="s-phone">Телефон</label><input id="s-phone" value="+7 (000) 000-00-00"></div>
+          <div class="field"><label for="s-email">Email</label><input id="s-email" type="email" value="info@example.ru"></div>
+        </div>
+        <div class="field"><label for="s-addr">Адрес</label><input id="s-addr" value="г. Москва"></div>
+        <button class="btn btn-primary" type="submit">Сохранить</button>
+      </div>
+    </form>
+    <div class="grid" style="gap:18px">
+      <div class="card">
+        <h3>Система</h3>
+        <label class="checkbox"><input type="checkbox" checked> Уведомления по email</label>
+        <label class="checkbox"><input type="checkbox" checked> Автоназначение менеджера</label>
+        <label class="checkbox"><input type="checkbox"> Тестовый режим оплаты</label>
+      </div>
+      <div class="card">
+        <h3>Интеграции</h3>
+        <div class="list-row"><span>💬 Telegram-бот</span><span class="badge badge--green">Подключён</span></div>
+        <div class="list-row"><span>💳 Платёжный шлюз</span><span class="badge badge--amber">Тест</span></div>
+        <div class="list-row"><span>📧 SMTP</span><span class="badge badge--green">Активен</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

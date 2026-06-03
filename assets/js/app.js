@@ -18,39 +18,39 @@
     client: [
       { id:'dashboard', label:'Главная',   href:'client/dashboard.html', ic:'🏠' },
       { id:'orders',    label:'Мои заказы', href:'client/orders.html',    ic:'📑' },
-      { id:'documents', label:'Документы',  href:'client/documents.html', ic:'📄', soon:true },
-      { id:'payments',  label:'Платежи',    href:'client/payments.html',  ic:'💳', soon:true },
-      { id:'messages',  label:'Сообщения',  href:'client/messages.html',  ic:'💬', soon:true },
-      { id:'profile',   label:'Профиль',    href:'client/profile.html',   ic:'👤', soon:true }
+      { id:'documents', label:'Документы',  href:'client/documents.html', ic:'📄' },
+      { id:'payments',  label:'Платежи',    href:'client/payments.html',  ic:'💳' },
+      { id:'messages',  label:'Сообщения',  href:'client/messages.html',  ic:'💬' },
+      { id:'profile',   label:'Профиль',    href:'client/profile.html',   ic:'👤' }
     ],
     staff: [
       { id:'dashboard', label:'Dashboard',       href:'staff/dashboard.html', ic:'📊' },
       { id:'orders',    label:'Реестр заказов',  href:'staff/orders.html',    ic:'📑' },
-      { id:'clients',   label:'Клиенты',         href:'staff/clients.html',   ic:'👥', soon:true },
-      { id:'tasks',     label:'Задачи',          href:'staff/tasks.html',     ic:'✅', soon:true },
-      { id:'calendar',  label:'Календарь',       href:'staff/calendar.html',  ic:'📅', soon:true },
-      { id:'documents', label:'Документы',       href:'staff/documents.html', ic:'📄', soon:true },
-      { id:'payments',  label:'Платежи и счета', href:'staff/payments.html',  ic:'💰', soon:true },
-      { id:'reports',   label:'Отчёты',          href:'staff/reports.html',   ic:'📈', soon:true }
+      { id:'clients',   label:'Клиенты',         href:'staff/clients.html',   ic:'👥' },
+      { id:'tasks',     label:'Задачи',          href:'staff/tasks.html',     ic:'✅' },
+      { id:'calendar',  label:'Календарь',       href:'staff/calendar.html',  ic:'📅' },
+      { id:'documents', label:'Документы',       href:'staff/documents.html', ic:'📄' },
+      { id:'payments',  label:'Платежи и счета', href:'staff/payments.html',  ic:'💰' },
+      { id:'reports',   label:'Отчёты',          href:'staff/reports.html',   ic:'📈' }
     ],
     executor: [
       { id:'tasks',    label:'Мои задачи', href:'executor/tasks.html',    ic:'✅' },
-      { id:'orders',   label:'Мои заказы', href:'executor/orders.html',   ic:'📑', soon:true },
-      { id:'calendar', label:'Календарь',  href:'executor/calendar.html', ic:'📅', soon:true }
+      { id:'orders',   label:'Мои заказы', href:'executor/orders.html',   ic:'📑' },
+      { id:'calendar', label:'Календарь',  href:'executor/calendar.html', ic:'📅' }
     ],
     admin: [
       { id:'users',        label:'Пользователи', href:'admin/users.html',        ic:'👥' },
-      { id:'roles',        label:'Роли и права', href:'admin/roles.html',        ic:'🔐', soon:true },
-      { id:'dictionaries', label:'Справочники',  href:'admin/dictionaries.html', ic:'📚', soon:true },
-      { id:'audit',        label:'Аудит лог',    href:'admin/audit.html',        ic:'🧾', soon:true },
-      { id:'settings',     label:'Настройки',    href:'admin/settings.html',     ic:'⚙️', soon:true }
+      { id:'roles',        label:'Роли и права', href:'admin/roles.html',        ic:'🔐' },
+      { id:'dictionaries', label:'Справочники',  href:'admin/dictionaries.html', ic:'📚' },
+      { id:'audit',        label:'Аудит лог',    href:'admin/audit.html',        ic:'🧾' },
+      { id:'settings',     label:'Настройки',    href:'admin/settings.html',     ic:'⚙️' }
     ]
   };
 
   var PUBLIC_NAV = [
     { id:'home',     label:'Главная',        href:'index.html' },
     { id:'services', label:'Услуги',         href:'catalog-services.html' },
-    { id:'products', label:'Товары',         href:'catalog-products.html', soon:true },
+    { id:'products', label:'Товары',         href:'catalog-products.html' },
     { id:'order',    label:'Оформить заказ', href:'order-new.html' }
   ];
 
