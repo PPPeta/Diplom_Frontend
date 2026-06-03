@@ -4,6 +4,10 @@
   var zone = body.dataset.zone || 'public';
   var page = body.dataset.page || '';
   var root = body.dataset.root || '';
+
+  /* ---------- Modern UI stylesheet (global, contemporary polish) ---------- */
+  (function(){ var ml=document.createElement('link'); ml.rel='stylesheet'; ml.href=root+'assets/css/modern.css'; document.head.appendChild(ml); })();
+
   var BRAND = 'Вечная Память';
 
   var ZONES = {
@@ -165,7 +169,7 @@
 
   /* Scroll progress (cheap, always on) */
   var prog = document.createElement('div'); prog.className='scroll-progress'; document.body.appendChild(prog);
-  function onProg(){ var h=document.documentElement; var max=h.scrollHeight-h.clientHeight; var p=max>0?h.scrollTop/max:0; prog.style.transform='scaleX('+p.toFixed(4)+')'; }
+  function onProg(){ var h=document.documentElement; var max=h.scrollHeight-h.clientHeight; var p=max>0?h.scrollTop/max:0; prog.style.transform='scaleX('+p.toFixed(4)+')'; if(h.scrollTop>8){ document.body.classList.add('scrolled'); } else { document.body.classList.remove('scrolled'); } }
   window.addEventListener('scroll', onProg, {passive:true}); window.addEventListener('resize', onProg); onProg();
 
   function revealAllNow(){ document.querySelectorAll(REVEAL_SEL).forEach(function(el){ el.classList.add('reveal','in-view'); }); }
