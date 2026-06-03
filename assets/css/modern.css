@@ -1,0 +1,90 @@
+/* ===========================================================================
+   Modern UI layer — глобальный современный полиш (подключается последним).
+   Использует токены из styles.css. Аддитивный — не ломает базовый макет.
+   =========================================================================== */
+
+:root{
+  --m-ring:0 0 0 3px rgba(166,129,75,.32);
+  --m-glass:rgba(255,253,248,.72);
+  --m-glass-border:rgba(210,201,180,.7);
+}
+
+/* Плавный скролл + сглаживание шрифтов */
+html{scroll-behavior:smooth}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+
+/* Выделение текста */
+::selection{background:rgba(166,129,75,.26);color:var(--primary-700)}
+
+/* Кастомный скроллбар */
+*{scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px;border:3px solid var(--bg);background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:var(--gold-soft);background-clip:padding-box}
+
+/* Доступные focus-ring только для клавиатуры */
+a:focus-visible,button:focus-visible,.btn:focus-visible,.chip:focus-visible,
+input:focus-visible,select:focus-visible,textarea:focus-visible,.nav-item:focus-visible{
+  outline:none;box-shadow:var(--m-ring);border-radius:10px
+}
+
+/* ---------- Sticky glass-шапка ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:var(--m-glass);
+  -webkit-backdrop-filter:saturate(150%) blur(14px);
+  backdrop-filter:saturate(150%) blur(14px);
+  border-bottom:1px solid var(--m-glass-border);
+  transition:box-shadow .3s ease,background .3s ease
+}
+.topbar::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-100),transparent);opacity:.7}
+body.scrolled .topbar{box-shadow:0 10px 30px -18px rgba(26,44,38,.55)}
+
+/* Подчёркивание пунктов меню */
+.topnav a{position:relative}
+.topnav a::after{content:'';position:absolute;left:9px;right:9px;bottom:1px;height:2px;border-radius:2px;background:var(--grad-gold);transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.2,.7,.2,1)}
+.topnav a:hover::after,.topnav a.active::after{transform:scaleX(1)}
+
+/* ---------- Кнопки: микроинтеракции ---------- */
+.btn{border-radius:12px;font-weight:600;letter-spacing:.01em;transition:transform .16s cubic-bezier(.2,.7,.2,1),box-shadow .2s ease,background .2s ease,border-color .2s ease,filter .2s ease}
+.btn:active{transform:translateY(1px) scale(.985)}
+.btn-sm{border-radius:10px}
+.btn-primary{box-shadow:0 10px 22px -12px rgba(46,74,64,.7)}
+.btn-primary:hover{filter:brightness(1.05);box-shadow:0 14px 28px -10px rgba(46,74,64,.78)}
+
+/* ---------- Поверхности ---------- */
+.card,.feature,.stat{border-radius:18px;transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s ease,border-color .25s ease}
+.card:hover,.feature:hover{box-shadow:var(--shadow);border-color:var(--border-strong)}
+
+/* ---------- Формы ---------- */
+.input,input[type=text],input[type=email],input[type=password],input[type=search],input[type=tel],input[type=number],input[type=date],input[type=time],select,textarea{
+  border-radius:12px;transition:border-color .2s ease,box-shadow .2s ease,background .2s ease
+}
+.input:focus,input:focus,select:focus,textarea:focus{border-color:var(--gold-soft);box-shadow:var(--m-ring);outline:none}
+
+/* ---------- Чипы-фильтры ---------- */
+.chip{border-radius:999px;transition:background .18s ease,color .18s ease,border-color .18s ease,transform .16s ease}
+.chip:hover{transform:translateY(-1px)}
+.chip.active{background:var(--grad-gold);color:#fff;border-color:transparent}
+
+/* ---------- Боковое меню ---------- */
+.nav-item{border-radius:12px;transition:background .18s ease,color .18s ease,transform .16s ease}
+.nav-item:hover{transform:translateX(2px)}
+.nav-item.active{box-shadow:inset 3px 0 0 var(--gold)}
+
+/* ---------- Таблицы / бейджи / аватар ---------- */
+.table-wrap{border-radius:16px;overflow:hidden}
+.badge{border-radius:999px}
+.avatar{box-shadow:0 6px 14px -8px rgba(0,0,0,.4)}
+
+/* ---------- Тосты ---------- */
+.toast{border-radius:14px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+
+/* ---------- Кнопка-меню (мобайл) ---------- */
+.menu-btn{border-radius:10px;transition:background .18s ease,transform .16s ease}
+.menu-btn:active{transform:scale(.94)}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+}
