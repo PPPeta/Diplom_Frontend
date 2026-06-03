@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Документы — Панель сотрудника</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="staff" data-page="documents" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Документы</h1><p class="page-sub">Договоры, счета и акты по всем заказам.</p></div><div class="quick-actions"><button class="btn" data-toast="Шаблоны документов (скоро)" data-toast-type="error">Шаблоны</button><button class="btn btn-primary" data-toast="Создание документа (скоро)" data-toast-type="error">+ Документ</button></div></div>
+  <div class="filters"><div class="chips"><span class="chip active">Все</span><span class="chip">Договоры</span><span class="chip">Счета</span><span class="chip">Акты</span></div><div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск…"></div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Документ</th><th>Заказ</th><th>Клиент</th><th>Дата</th><th>Статус</th><th></th></tr></thead>
+      <tbody>
+        <tr><td class="t-strong">📄 Договор № 1042</td><td>#1042</td><td>А. Морозова</td><td>12.05.2026</td><td><span class="badge badge--green">Подписан</span></td><td><button class="btn btn-sm" data-toast="Открыто" data-toast-type="success">Открыть</button></td></tr>
+        <tr><td class="t-strong">🧾 Счёт № 1042-1</td><td>#1042</td><td>А. Морозова</td><td>12.05.2026</td><td><span class="badge badge--amber">Ожидает оплаты</span></td><td><button class="btn btn-sm" data-toast="Открыто" data-toast-type="success">Открыть</button></td></tr>
+        <tr><td class="t-strong">📄 Договор № 1040</td><td>#1040</td><td>К. Иванова</td><td>11.05.2026</td><td><span class="badge badge--blue">На согласовании</span></td><td><button class="btn btn-sm" data-toast="Открыто" data-toast-type="success">Открыть</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

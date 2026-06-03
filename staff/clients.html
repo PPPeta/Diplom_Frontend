@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Клиенты — Панель сотрудника</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="staff" data-page="clients" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Клиенты</h1><p class="page-sub">База клиентов и история обращений.</p></div><button class="btn btn-primary" data-toast="Форма добавления клиента (скоро)" data-toast-type="error">+ Клиент</button></div>
+  <div class="filters"><div class="search"><input class="input" placeholder="Поиск по имени или телефону…"></div><select class="input"><option>Все клиенты</option><option>Активные</option><option>Новые</option></select></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Клиент</th><th>Телефон</th><th>Email</th><th>Заказов</th><th>Последний</th><th>Статус</th></tr></thead>
+      <tbody>
+        <tr class="row-link" onclick="location.href='orders.html'"><td class="t-strong">Анна Морозова</td><td class="t-mono">+7 916 000-00-00</td><td class="t-muted">morozova@example.ru</td><td>4</td><td>12.05.2026</td><td><span class="badge badge--green">Активен</span></td></tr>
+        <tr class="row-link" onclick="location.href='orders.html'"><td class="t-strong">Сергей Петров</td><td class="t-mono">+7 903 111-22-33</td><td class="t-muted">petrov@example.ru</td><td>1</td><td>11.05.2026</td><td><span class="badge badge--blue">Новый</span></td></tr>
+        <tr class="row-link" onclick="location.href='orders.html'"><td class="t-strong">Ксения Иванова</td><td class="t-mono">+7 925 444-55-66</td><td class="t-muted">ivanova@example.ru</td><td>2</td><td>11.05.2026</td><td><span class="badge badge--green">Активен</span></td></tr>
+        <tr class="row-link" onclick="location.href='orders.html'"><td class="t-strong">Геннадий Лебедев</td><td class="t-mono">+7 999 777-88-99</td><td class="t-muted">lebedev@example.ru</td><td>3</td><td>09.05.2026</td><td><span class="badge badge--gray">Завершён</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>
