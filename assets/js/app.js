@@ -87,7 +87,7 @@
   /* ---------- Topbar ---------- */
   var header = document.createElement('header'); header.className='topbar';
   var menuBtn = '';
-  if (zone !== 'public') menuBtn = '<button class="menu-btn" id="menuBtn">☰</button>';
+  if (zone !== 'public') menuBtn = '<button class="menu-btn" id="menuBtn" aria-label="Меню">☰</button>';
   var brand = '<a class="brand" href="'+L('index.html')+'"><span class="logo">◆</span>'+BRAND+'</a>';
   var topnav = '';
   if (zone === 'public') {
@@ -128,9 +128,30 @@
     shell.appendChild(aside); shell.appendChild(main);
     body.appendChild(shell);
     aside.querySelectorAll('a[data-soon]').forEach(function(a){ a.addEventListener('click', soonHandler(a.getAttribute('data-soon'))); });
+
+    /* Mobile sidebar + backdrop */
+    var backdrop = document.createElement('div'); backdrop.className='sidebar-backdrop'; body.appendChild(backdrop);
+    function closeSidebar(){ aside.classList.remove('open'); backdrop.classList.remove('show'); }
     var mb = document.getElementById('menuBtn');
-    if (mb) mb.addEventListener('click', function(){ aside.classList.toggle('open'); });
+    if (mb) mb.addEventListener('click', function(){
+      var open = aside.classList.toggle('open');
+      backdrop.classList.toggle('show', open);
+    });
+    backdrop.addEventListener('click', closeSidebar);
+    aside.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeSidebar); });
+    window.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSidebar(); });
   }
+
+  /* ---------- Interactive filter chips (single-select within a .chips group) ---------- */
+  document.querySelectorAll('.chips').forEach(function(group){
+    group.querySelectorAll('.chip').forEach(function(chip){
+      if (chip.hasAttribute('data-soon')) return;
+      chip.addEventListener('click', function(){
+        group.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+        chip.classList.add('active');
+      });
+    });
+  });
 
   /* ---------- Generic helpers for buttons marked data-toast ---------- */
   document.addEventListener('click', function(e){
