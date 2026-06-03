@@ -1,0 +1,50 @@
+/* Polish pass v2 — supplementary components & fixes (loaded after styles.css) */
+
+/* Clickable list rows (dashboard notifications, etc.) */
+.list-row.row-link{margin:0 -10px;padding-left:10px;padding-right:10px;border-radius:10px;color:inherit;transition:background .14s,translate .14s}
+.list-row.row-link:hover{background:var(--surface-2);translate:2px 0}
+.list-row.row-link::after{content:'\203A';color:var(--muted-2);font-size:18px;line-height:1;flex:none;transition:transform .15s,color .15s}
+.list-row.row-link:hover::after{color:var(--gold);transform:translateX(3px)}
+
+/* Cards holding edge-to-edge rows */
+.card.flush{padding:0;overflow:hidden}
+
+/* ---------- Conversations list ---------- */
+.chat-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.conv{display:flex;align-items:center;gap:11px;padding:13px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .14s}
+.conv:last-child{border-bottom:0}
+.conv:hover{background:var(--surface-2)}
+.conv.active{background:var(--primary-50)}
+.conv .avatar{width:38px;height:38px;border-radius:50%;background:var(--primary-100);color:var(--primary-700);display:grid;place-items:center;font-weight:700;font-size:13px;font-family:var(--serif);flex:none}
+.conv .conv-main{flex:1;min-width:0}
+.conv .conv-main b{font-size:14px;color:var(--primary-700)}
+.conv .conv-main span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- Chat thread ---------- */
+.chat{display:flex;flex-direction:column;height:clamp(420px,60vh,620px)}
+.chat-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 2px}
+.bubble{max-width:74%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.45;box-shadow:var(--shadow-sm)}
+.bubble .b-time{display:block;font-size:11px;margin-top:5px;opacity:.75}
+.bubble.in{align-self:flex-start;background:var(--surface-2);border:1px solid var(--border);border-bottom-left-radius:5px;color:var(--text)}
+.bubble.out{align-self:flex-end;background:var(--primary);color:#f5f1e8;border-bottom-right-radius:5px}
+.chat-form{display:flex;gap:10px;align-items:center;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.chat-form .input{flex:1;min-width:0}
+
+/* ---------- Week calendar ---------- */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
+.cal-day{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;min-height:132px;display:flex;flex-direction:column;gap:8px;transition:border-color .2s,box-shadow .2s,translate .2s}
+.cal-day:hover{border-color:var(--gold-soft);box-shadow:var(--shadow-sm);translate:0 -2px}
+.cal-day.today{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.cal-h{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.cal-dow{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.cal-date{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--primary-700)}
+.cal-event{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;background:var(--surface-2);font-size:12.5px;line-height:1.3;border-left:3px solid var(--gold-soft)}
+.cal-event .t{font-variant-numeric:tabular-nums;font-weight:700;color:var(--primary-700)}
+.cal-event.blue{border-left-color:var(--blue)}
+.cal-event.amber{border-left-color:var(--amber)}
+.cal-event.red{border-left-color:var(--red)}
+.cal-event.green{border-left-color:var(--green)}
+.cal-empty{font-size:12px;color:var(--muted-2);margin:auto 0;text-align:center;padding:10px 0}
+
+@media(max-width:920px){.chat-layout{grid-template-columns:1fr}.cal{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.cal{grid-template-columns:1fr}.bubble{max-width:88%}.chat{height:clamp(360px,56vh,520px)}.search{flex:1 1 100%}.search .input{min-width:0;width:100%}}

@@ -5,28 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Сообщения — Кабинет клиента</title>
 <link rel="stylesheet" href="../assets/css/styles.css">
+<link rel="stylesheet" href="../assets/css/polish.css">
 </head>
 <body data-zone="client" data-page="messages" data-root="../">
 <main id="view">
   <div class="page-head"><div><h1 class="page-title">Сообщения</h1><p class="page-sub">Переписка с вашим менеджером по заказам.</p></div></div>
-  <div class="cols">
-    <div class="card" style="padding:0;overflow:hidden">
-      <div class="list-row" style="background:var(--primary-50)"><div><b>И. Сафронов</b><br><span class="t-muted">Заказ #1042</span></div><span class="badge badge--amber">2</span></div>
-      <div class="list-row"><div><b>М. Крылова</b><br><span class="t-muted">Заказ #1021</span></div></div>
-      <div class="list-row"><div><b>Поддержка</b><br><span class="t-muted">Общие вопросы</span></div></div>
+  <div class="chat-layout">
+    <div class="card flush">
+      <div class="conv active"><span class="avatar">ИС</span><div class="conv-main"><b>И. Сафронов</b><span>Договор уже в разделе «Документы»…</span></div><span class="badge badge--amber">2</span></div>
+      <div class="conv"><span class="avatar">МК</span><div class="conv-main"><b>М. Крылова</b><span>Заказ #1021 завершён</span></div></div>
+      <div class="conv"><span class="avatar">ПД</span><div class="conv-main"><b>Поддержка</b><span>Общие вопросы по сервису</span></div></div>
     </div>
     <div class="card">
       <div class="card-h"><h3>И. Сафронов · Заказ #1042</h3><span class="badge badge--green">Онлайн</span></div>
-      <div class="grid" style="gap:10px">
-        <div class="list-row"><span>Добрый день! Подтвердили детали по вашему заказу, выполнение начато.</span><span class="t-muted">10:24</span></div>
-        <div class="list-row" style="background:var(--primary-50)"><span>Спасибо! Когда будет готов договор?</span><span class="t-muted">10:40</span></div>
-        <div class="list-row"><span>Договор уже в разделе «Документы», можно подписать.</span><span class="t-muted">10:42</span></div>
+      <div class="chat">
+        <div class="chat-body">
+          <div class="bubble in">Добрый день! Подтвердили детали по вашему заказу, выполнение начато.<span class="b-time">10:24</span></div>
+          <div class="bubble out">Спасибо! Когда будет готов договор?<span class="b-time">10:40</span></div>
+          <div class="bubble in">Договор уже в разделе «Документы», можно подписать.<span class="b-time">10:42</span></div>
+          <div class="bubble out">Отлично, подпишу сегодня.<span class="b-time">10:45</span></div>
+        </div>
+        <form class="chat-form" onsubmit="event.preventDefault(); window.toast('Сообщение отправлено','success'); this.reset();">
+          <input class="input" placeholder="Напишите сообщение…" required>
+          <button class="btn btn-primary" type="submit">Отправить</button>
+        </form>
       </div>
-      <hr class="divider">
-      <form class="form-row" onsubmit="event.preventDefault(); window.toast('Сообщение отправлено','success'); this.reset();">
-        <div class="field" style="flex:1"><input class="input" placeholder="Напишите сообщение…" required></div>
-        <button class="btn btn-primary" type="submit">Отправить</button>
-      </form>
     </div>
   </div>
 </main>
