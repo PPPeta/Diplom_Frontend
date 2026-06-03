@@ -5,20 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Календарь — Панель сотрудника</title>
 <link rel="stylesheet" href="../assets/css/styles.css">
+<link rel="stylesheet" href="../assets/css/polish.css">
 </head>
 <body data-zone="staff" data-page="calendar" data-root="../">
 <main id="view">
   <div class="page-head"><div><h1 class="page-title">Календарь</h1><p class="page-sub">Расписание заказов и задач на неделю.</p></div><div class="quick-actions"><button class="btn btn-sm" data-toast="Предыдущая неделя">‹ Неделя</button><button class="btn btn-sm" data-toast="Следующая неделя">Неделя ›</button></div></div>
-  <div class="grid g-4">
-    <div class="card"><div class="card-h"><h3>Пн 11</h3></div><div class="list-row"><span class="badge badge--blue">10:00</span> Заказ #1041</div></div>
-    <div class="card"><div class="card-h"><h3>Вт 12</h3></div><div class="list-row"><span class="badge badge--amber">09:00</span> Заказ #1042</div><div class="list-row"><span class="badge badge--gray">15:00</span> Встреча с клиентом</div></div>
-    <div class="card"><div class="card-h"><h3>Ср 13</h3></div><div class="list-row"><span class="badge badge--red">09:00</span> Транспорт #1042</div></div>
-    <div class="card"><div class="card-h"><h3>Чт 14</h3></div><div class="list-row"><span class="badge badge--amber">12:00</span> Документы #1040</div></div>
-  </div>
-  <div class="grid g-3 mt">
-    <div class="card"><div class="card-h"><h3>Пт 15</h3></div><div class="list-row"><span class="badge badge--gray">11:00</span> Согласование #1037</div></div>
-    <div class="card"><div class="card-h"><h3>Сб 16</h3></div><div class="empty">Нет событий</div></div>
-    <div class="card"><div class="card-h"><h3>Вс 17</h3></div><div class="empty">Выходной</div></div>
+  <div class="cal">
+    <div class="cal-day"><div class="cal-h"><span class="cal-dow">Пн</span><span class="cal-date">11</span></div><div class="cal-event blue"><span class="t">10:00</span> Заказ #1041</div></div>
+    <div class="cal-day today"><div class="cal-h"><span class="cal-dow">Вт</span><span class="cal-date">12</span></div><div class="cal-event amber"><span class="t">09:00</span> Заказ #1042</div><div class="cal-event"><span class="t">15:00</span> Встреча с клиентом</div></div>
+    <div class="cal-day"><div class="cal-h"><span class="cal-dow">Ср</span><span class="cal-date">13</span></div><div class="cal-event red"><span class="t">09:00</span> Транспорт #1042</div></div>
+    <div class="cal-day"><div class="cal-h"><span class="cal-dow">Чт</span><span class="cal-date">14</span></div><div class="cal-event amber"><span class="t">12:00</span> Документы #1040</div></div>
+    <div class="cal-day"><div class="cal-h"><span class="cal-dow">Пт</span><span class="cal-date">15</span></div><div class="cal-event"><span class="t">11:00</span> Согласование #1037</div></div>
+    <div class="cal-day"><div class="cal-h"><span class="cal-dow">Сб</span><span class="cal-date">16</span></div><div class="cal-empty">Нет событий</div></div>
+    <div class="cal-day"><div class="cal-h"><span class="cal-dow">Вс</span><span class="cal-date">17</span></div><div class="cal-empty">Выходной</div></div>
   </div>
 </main>
 <script src="../assets/js/app.js"></script>
