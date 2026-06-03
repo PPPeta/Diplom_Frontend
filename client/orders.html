@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мои заказы — Кабинет клиента</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="client" data-page="orders" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Мои заказы</h1><p class="page-sub">Все ваши заказы и их статусы.</p></div><a class="btn btn-primary" href="../order-new.html">+ Новый заказ</a></div>
+  <div class="filters">
+    <div class="chips"><span class="chip active">Все</span><span class="chip">Новые</span><span class="chip">В работе</span><span class="chip">Завершённые</span></div>
+    <div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск по номеру…"></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>№ заказа</th><th>Дата</th><th>Состав</th><th>Сумма</th><th>Менеджер</th><th>Статус</th></tr></thead>
+      <tbody>
+        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1042</td><td>12.05.2026</td><td>Полный цикл</td><td class="t-mono">34 500 ₽</td><td>И. Сафронов</td><td><span class="badge badge--amber">В работе</span></td></tr>
+        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1039</td><td>08.05.2026</td><td>Транспорт</td><td class="t-mono">6 000 ₽</td><td>И. Сафронов</td><td><span class="badge badge--blue">Новый</span></td></tr>
+        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1021</td><td>21.04.2026</td><td>Документы</td><td class="t-mono">4 000 ₽</td><td>М. Крылова</td><td><span class="badge badge--green">Завершён</span></td></tr>
+        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1008</td><td>03.04.2026</td><td>Консультация</td><td class="t-mono">0 ₽</td><td>М. Крылова</td><td><span class="badge badge--gray">Закрыт</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

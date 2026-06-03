@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Заказ #1042 — Менеджер</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="staff" data-page="orders" data-root="../">
+<main id="view">
+  <div class="breadcrumbs"><a href="orders.html">Реестр заказов</a> / Заказ #1042</div>
+  <div class="page-head">
+    <div><h1 class="page-title">Заказ #1042 <span class="badge badge--amber">В работе</span></h1><p class="page-sub">Клиент: Анна Морозова · Создан 12.05.2026</p></div>
+  </div>
+  <div class="card mt-sm" style="margin-bottom:18px">
+    <div class="card-h"><h3>Переход по этапам</h3></div>
+    <div class="quick-actions">
+      <button class="btn" data-toast="Статус: Принят" data-toast-type="success">Принять</button>
+      <button class="btn" data-toast="Статус: Уточнение" data-toast-type="success">Уточнить</button>
+      <button class="btn" data-toast="Статус: Согласовано" data-toast-type="success">Согласовать</button>
+      <button class="btn btn-primary" data-toast="Статус: Передан в исполнение" data-toast-type="success">В исполнение</button>
+      <button class="btn" data-toast="Статус: Завершён" data-toast-type="success">Завершить</button>
+      <button class="btn btn-danger" data-toast="Требуется подтверждение закрытия" data-toast-type="error">Закрыть</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="grid" style="gap:18px">
+      <div class="card">
+        <div class="card-h"><h3>Информация о заказе</h3></div>
+        <dl class="kv"><dt>Клиент</dt><dd>Анна Морозова</dd><dt>Телефон</dt><dd>+7 900 000-00-00</dd><dt>Этап</dt><dd>Выполнение</dd><dt>Сумма</dt><dd class="t-mono">34 500 ₽</dd></dl>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Состав и исполнители</h3></div>
+        <div class="list-row"><span>Полный цикл под ключ</span><span>П. Ким <span class="badge badge--amber">В работе</span></span></div>
+        <div class="list-row"><span>Подача транспорта</span><span>Д. Соколов <span class="badge badge--green">Готово</span></span></div>
+        <button class="btn btn-sm mt-sm" data-toast="Назначение исполнителя (скоро)" data-toast-type="error">+ Назначить исполнителя</button>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Внутренние заметки</h3></div>
+        <textarea class="input" style="width:100%" placeholder="Заметка для команды…"></textarea>
+        <button class="btn btn-sm mt-sm" data-toast="Заметка сохранена" data-toast-type="success">Сохранить</button>
+      </div>
+    </div>
+    <div class="grid" style="gap:18px">
+      <div class="card">
+        <div class="card-h"><h3>Timeline</h3></div>
+        <div class="timeline">
+          <div class="tl-item done"><div class="tl-t">Создан</div><div class="tl-d">12.05, 10:24</div></div>
+          <div class="tl-item done"><div class="tl-t">Принят</div><div class="tl-d">12.05, 11:40</div></div>
+          <div class="tl-item current"><div class="tl-t">Исполнение</div><div class="tl-d">сейчас</div></div>
+          <div class="tl-item"><div class="tl-t">Завершение</div><div class="tl-d">—</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Финансы</h3></div>
+        <div class="list-row"><span>Аванс</span><span class="badge badge--green">22 500 ₽</span></div>
+        <div class="list-row"><span>Остаток</span><span class="badge badge--red">12 000 ₽</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

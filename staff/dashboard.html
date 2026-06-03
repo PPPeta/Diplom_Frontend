@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard менеджера</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="staff" data-page="dashboard" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Dashboard</h1><p class="page-sub">Оперативная сводка по заказам и задачам.</p></div><a class="btn btn-primary" href="orders.html">+ Создать заказ</a></div>
+  <div class="grid g-4">
+    <div class="stat"><div class="lbl"><span class="ic">🆕</span> Новые заявки</div><div class="num">5</div><div class="delta up">+2 сегодня</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">⚙️</span> В работе</div><div class="num">12</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">⏰</span> Просрочено</div><div class="num">3</div><div class="delta down">требуют внимания</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">💰</span> Ожидают оплаты</div><div class="num">86 500 ₽</div></div>
+  </div>
+
+  <div class="cols mt">
+    <div class="card">
+      <div class="card-h"><h3>Новые заявки</h3><a class="btn btn-sm" href="orders.html">Реестр заказов</a></div>
+      <div class="table-wrap" style="border:0">
+        <table>
+          <thead><tr><th>№</th><th>Клиент</th><th>Сумма</th><th>Статус</th></tr></thead>
+          <tbody>
+            <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1042</td><td>А. Морозова</td><td class="t-mono">34 500 ₽</td><td><span class="badge badge--blue">Новый</span></td></tr>
+            <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1041</td><td>С. Петров</td><td class="t-mono">9 000 ₽</td><td><span class="badge badge--blue">Новый</span></td></tr>
+            <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1040</td><td>К. Иванова</td><td class="t-mono">15 000 ₽</td><td><span class="badge badge--amber">Уточнение</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>Последние действия</h3></div>
+      <div class="list-row"><span>✅ Заказ #1037 завершён</span><span class="t-muted">10:12</span></div>
+      <div class="list-row"><span>👤 Назначен исполнитель #1035</span><span class="t-muted">09:40</span></div>
+      <div class="list-row"><span>💳 Оплата по #1031</span><span class="t-muted">вчера</span></div>
+    </div>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

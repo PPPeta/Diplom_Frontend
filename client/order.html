@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Заказ #1042 — Кабинет клиента</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="client" data-page="orders" data-root="../">
+<main id="view">
+  <div class="breadcrumbs"><a href="orders.html">Мои заказы</a> / Заказ #1042</div>
+  <div class="page-head">
+    <div><h1 class="page-title">Заказ #1042 <span class="badge badge--amber" style="vertical-align:middle">В работе</span></h1><p class="page-sub">Создан 12.05.2026 · Менеджер: И. Сафронов</p></div>
+    <div class="quick-actions">
+      <button class="btn btn-primary" data-toast="Переход к оплате (скоро)" data-toast-type="error">Оплатить</button>
+      <button class="btn" data-toast="Сообщение менеджеру (скоро)" data-toast-type="error">Задать вопрос</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="grid" style="gap:18px">
+      <div class="card">
+        <div class="card-h"><h3>Состав заказа</h3></div>
+        <div class="list-row"><span>Полный цикл под ключ</span><b>25 000 ₽</b></div>
+        <div class="list-row"><span>Подача транспорта</span><b>6 000 ₽</b></div>
+        <div class="list-row"><span>Оформление декора</span><b>3 500 ₽</b></div>
+        <div class="list-row" style="font-size:17px"><b>Итого</b><b class="price">34 500 ₽</b></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Ход выполнения</h3></div>
+        <div class="timeline">
+          <div class="tl-item done"><div class="tl-t">Заявка создана</div><div class="tl-d">12.05.2026, 10:24</div></div>
+          <div class="tl-item done"><div class="tl-t">Подтверждена менеджером</div><div class="tl-d">12.05.2026, 11:40</div></div>
+          <div class="tl-item current"><div class="tl-t">Выполнение работ</div><div class="tl-d">В процессе</div></div>
+          <div class="tl-item"><div class="tl-t">Завершение и закрытие</div><div class="tl-d">Ожидается</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid" style="gap:18px">
+      <div class="card">
+        <div class="card-h"><h3>Оплата</h3></div>
+        <div class="list-row"><span>Аванс</span><span><b>22 500 ₽</b> <span class="badge badge--green">Оплачен</span></span></div>
+        <div class="list-row"><span>Остаток</span><span><b>12 000 ₽</b> <span class="badge badge--red">К оплате</span></span></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Документы</h3></div>
+        <div class="list-row"><span>📄 Договор № 1042</span><span class="badge badge--green">Подписан</span></div>
+        <div class="list-row"><span>📄 Счёт на оплату</span><span class="badge badge--amber">Ожидает</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

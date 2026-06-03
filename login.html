@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вход и регистрация — Сервис-Заказы</title>
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-zone="public" data-page="login" data-root="">
+<div class="container" style="max-width:460px;padding-top:48px;padding-bottom:48px">
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" id="t-login" onclick="switchTab('login')">Вход</div>
+      <div class="tab" id="t-reg" onclick="switchTab('reg')">Регистрация</div>
+    </div>
+
+    <form id="form-login" class="form" onsubmit="event.preventDefault(); window.toast('Вход выполнен', 'success'); setTimeout(function(){location.href='client/dashboard.html';},700);">
+      <div class="field"><label>Email или телефон</label><input required placeholder="mail@example.ru"></div>
+      <div class="field"><label>Пароль</label><input type="password" required placeholder="••••••••"></div>
+      <div style="text-align:right"><a class="btn btn-ghost btn-sm" href="#" data-toast="Ссылка для восстановления отправлена">Забыли пароль?</a></div>
+      <button class="btn btn-primary btn-block" type="submit">Войти</button>
+    </form>
+
+    <form id="form-reg" class="form" style="display:none" onsubmit="event.preventDefault(); window.toast('Аккаунт создан, подтвердите email', 'success');">
+      <div class="field"><label>Имя</label><input required></div>
+      <div class="field"><label>Email</label><input type="email" required></div>
+      <div class="field"><label>Телефон</label><input required></div>
+      <div class="field"><label>Пароль</label><input type="password" required></div>
+      <label class="checkbox"><input type="checkbox" required> Согласен на обработку персональных данных</label>
+      <button class="btn btn-primary btn-block" type="submit">Зарегистрироваться</button>
+    </form>
+
+    <hr class="divider">
+    <p class="t-muted" style="font-size:13px;text-align:center">Демо-вход в рабочие кабинеты:</p>
+    <div class="quick-actions" style="justify-content:center">
+      <a class="btn btn-sm" href="client/dashboard.html">Клиент</a>
+      <a class="btn btn-sm" href="staff/dashboard.html">Менеджер</a>
+      <a class="btn btn-sm" href="executor/tasks.html">Исполнитель</a>
+      <a class="btn btn-sm" href="admin/users.html">Админ</a>
+    </div>
+  </div>
+</div>
+<script>
+function switchTab(t){
+  document.getElementById('t-login').classList.toggle('active', t==='login');
+  document.getElementById('t-reg').classList.toggle('active', t==='reg');
+  document.getElementById('form-login').style.display = t==='login'?'grid':'none';
+  document.getElementById('form-reg').style.display = t==='reg'?'grid':'none';
+}
+</script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

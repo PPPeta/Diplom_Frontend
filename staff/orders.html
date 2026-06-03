@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Реестр заказов</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="staff" data-page="orders" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Реестр заказов</h1><p class="page-sub">Все заказы организации.</p></div><div class="quick-actions"><button class="btn" data-toast="Экспорт (скоро)" data-toast-type="error">Экспорт</button><button class="btn btn-primary" data-toast="Форма создания заказа (скоро)" data-toast-type="error">+ Заказ</button></div></div>
+  <div class="filters">
+    <div class="search"><input class="input" placeholder="Поиск…"></div>
+    <select class="input"><option>Все статусы</option><option>Новый</option><option>В работе</option><option>Завершён</option></select>
+    <select class="input"><option>Все менеджеры</option><option>И. Сафронов</option><option>М. Крылова</option></select>
+    <input class="input" type="date">
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>№</th><th>Клиент</th><th>Дата</th><th>Сумма</th><th>Исполнитель</th><th>Срочность</th><th>Статус</th></tr></thead>
+      <tbody>
+        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1042</td><td>А. Морозова</td><td>12.05</td><td class="t-mono">34 500 ₽</td><td>П. Ким</td><td><span class="badge badge--red">Высокая</span></td><td><span class="badge badge--amber">В работе</span></td></tr>
+        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1041</td><td>С. Петров</td><td>11.05</td><td class="t-mono">9 000 ₽</td><td class="t-muted">—</td><td><span class="badge badge--gray">Обычная</span></td><td><span class="badge badge--blue">Новый</span></td></tr>
+        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1040</td><td>К. Иванова</td><td>11.05</td><td class="t-mono">15 000 ₽</td><td>Д. Соколов</td><td><span class="badge badge--amber">Средняя</span></td><td><span class="badge badge--amber">Уточнение</span></td></tr>
+        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1037</td><td>Г. Лебедев</td><td>09.05</td><td class="t-mono">28 000 ₽</td><td>П. Ким</td><td><span class="badge badge--gray">Обычная</span></td><td><span class="badge badge--green">Завершён</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

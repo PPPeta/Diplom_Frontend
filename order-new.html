@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оформление заказа — Сервис-Заказы</title>
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-zone="public" data-page="order" data-root="">
+<div class="container section-sm">
+  <div class="breadcrumbs"><a href="index.html">Главная</a> / Оформление заказа</div>
+  <h1 class="page-title">Оформление заявки</h1>
+  <p class="page-sub">Заполните данные — менеджер свяжется для подтверждения.</p>
+
+  <div class="cols mt">
+    <form class="card" onsubmit="event.preventDefault(); window.toast('Заявка успешно отправлена — номер #1043', 'success');">
+      <h3>Данные клиента</h3>
+      <div class="form mt-sm">
+        <div class="form-row">
+          <div class="field"><label>ФИО</label><input required placeholder="Иванов ИванИванович"></div>
+          <div class="field"><label>Телефон</label><input required placeholder="+7 …"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Email</label><input type="email" placeholder="mail@example.ru"></div>
+          <div class="field"><label>Способ связи</label><select><option>Телефон</option><option>Email</option><option>Мессенджер</option></select></div>
+        </div>
+        <hr class="divider">
+        <h3>Детали заказа</h3>
+        <div class="form-row">
+          <div class="field"><label>Предпочтительная дата</label><input type="date"></div>
+          <div class="field"><label>Время</label><input type="time"></div>
+        </div>
+        <div class="field"><label>Комментарий</label><textarea placeholder="Уточните пожелания…"></textarea></div>
+        <label class="checkbox"><input type="checkbox" required> Согласен на обработку персональных данных</label>
+        <button class="btn btn-primary btn-block" type="submit">Отправить заявку</button>
+      </div>
+    </form>
+
+    <aside class="card">
+      <h3>Ваш заказ</h3>
+      <div class="list-row"><span>Полный цикл под ключ</span><b>25 000 ₽</b></div>
+      <div class="list-row"><span>Подача транспорта</span><b>6 000 ₽</b></div>
+      <div class="list-row"><span>Оформление декора</span><b>3 500 ₽</b></div>
+      <div class="list-row" style="font-size:18px"><b>Итого</b><b class="price">34 500 ₽</b></div>
+      <div class="notice mt">💡 Итоговая сумма предварительная и будет уточнена менеджером.</div>
+    </aside>
+  </div>
+</div>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
