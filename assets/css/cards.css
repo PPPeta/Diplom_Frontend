@@ -1,0 +1,51 @@
+/* ============ Service / product cards — modern redesign (loaded after styles.css) ============ */
+
+.svc{
+  position:relative;
+  background:linear-gradient(180deg,var(--surface),#fffaf0);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:22px 22px 20px;
+  display:flex;flex-direction:column;gap:14px;
+  overflow:visible;
+  box-shadow:var(--shadow-sm);
+  transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s,border-color .25s,translate .25s;
+}
+.svc::after{content:'';position:absolute;left:22px;right:22px;top:0;height:3px;border-radius:0 0 4px 4px;background:var(--grad-gold);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.svc:hover{translate:0 -5px;box-shadow:var(--shadow);border-color:var(--gold-soft)}
+.svc:hover::after{transform:scaleX(1)}
+
+.svc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.svc-ico{width:58px;height:58px;border-radius:16px;flex:none;display:grid;place-items:center;font-size:27px;line-height:1;background:radial-gradient(120% 120% at 30% 20%,var(--gold-50),var(--gold-100));border:1px solid var(--gold-100);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 8px 18px -10px rgba(166,129,75,.6);transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.svc:hover .svc-ico{transform:rotate(-7deg) scale(1.08)}
+
+.svc-tag{align-self:flex-start;font-size:11.5px;font-weight:600;letter-spacing:.02em;padding:5px 11px;border-radius:var(--radius-pill);background:var(--primary-50);color:var(--primary-600);border:1px solid var(--primary-100);white-space:nowrap}
+.svc-tag--accent{background:var(--grad-gold);color:#fff;border-color:transparent;box-shadow:0 6px 14px -6px rgba(166,129,75,.7)}
+
+.svc-body{display:flex;flex-direction:column;gap:6px;flex:1}
+.svc-body h4{margin:0;font-size:20px;line-height:1.2}
+.svc-body p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+.svc .foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:13px;border-top:1px dashed var(--border)}
+.svc .price{font-family:var(--serif);font-weight:700;font-size:22px;letter-spacing:.3px;color:var(--primary-700)}
+.svc .foot .btn{transition:gap .2s,transform .2s cubic-bezier(.2,.7,.2,1),background .15s,border-color .15s,box-shadow .15s}
+.svc .foot .btn:hover{gap:11px}
+
+/* ---- Featured wide card (home) ---- */
+.svc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.svc--wide{grid-column:1 / -1;flex-direction:row;align-items:stretch;padding:0;gap:0;overflow:hidden}
+.svc--wide::after{display:none}
+.svc--wide .svc-art{flex:0 0 232px;display:grid;place-items:center;position:relative;overflow:hidden;background:radial-gradient(120% 90% at 20% 10%,rgba(255,255,255,.12),transparent 45%),linear-gradient(150deg,var(--primary-600),var(--primary-700) 60%,#16241f)}
+.svc--wide .svc-art::before{content:'';position:absolute;inset:-30%;background:repeating-radial-gradient(circle at 78% 112%,transparent 0 16px,rgba(194,160,106,.18) 16px 17px,transparent 17px 32px);animation:thumbdrift 24s linear infinite alternate}
+.svc--wide .svc-ico.lg{width:104px;height:104px;border-radius:50%;font-size:50px;z-index:1;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.32),rgba(255,255,255,.06) 60%,rgba(255,255,255,0));border:1px solid rgba(246,239,225,.5);box-shadow:0 16px 34px -12px rgba(0,0,0,.5),inset 0 0 22px rgba(255,255,255,.18);animation:floaty 6s ease-in-out infinite}
+.svc--wide .svc-main{flex:1;display:flex;flex-direction:column;gap:10px;padding:26px 28px}
+.svc--wide .svc-main h4{font-size:26px;line-height:1.15}
+.svc--wide .svc-main p{font-size:14px;-webkit-line-clamp:4}
+.svc--wide .foot{margin-top:auto}
+
+@media(max-width:920px){
+  .svc-grid{grid-template-columns:1fr}
+  .svc--wide{flex-direction:column}
+  .svc--wide .svc-art{flex:none;min-height:184px}
+}
+@media(max-width:560px){.svc{border-radius:16px}}
