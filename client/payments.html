@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Платежи — Кабинет клиента</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="client" data-page="payments" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Платежи</h1><p class="page-sub">Счета, оплаты и история транзакций.</p></div></div>
+  <div class="grid g-3">
+    <div class="stat"><div class="lbl"><span class="ic">💳</span> К оплате</div><div class="num">12 000 ₽</div><div class="delta down">1 счёт</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">✅</span> Оплачено за год</div><div class="num">62 500 ₽</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">🧾</span> Всего счетов</div><div class="num">5</div></div>
+  </div>
+  <div class="cols mt">
+    <div class="card">
+      <div class="card-h"><h3>Счета к оплате</h3></div>
+      <div class="list-row"><div><b>Счёт № 1042-1</b><br><span class="t-muted">Заказ #1042 · остаток по заказу</span></div><div style="text-align:right"><b class="price">12 000 ₽</b><br><button class="btn btn-sm btn-primary mt-sm" data-toast="Переход к онлайн-оплате (демо)" data-toast-type="success">Оплатить</button></div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>Способы оплаты</h3></div>
+      <div class="list-row"><span>💳 Visa •••• 4421</span><span class="badge badge--green">Основная</span></div>
+      <div class="list-row"><span>🏦 Банковский перевод</span><span class="t-muted">по счёту</span></div>
+      <button class="btn btn-sm mt-sm" data-toast="Добавление карты скоро будет доступно" data-toast-type="error">+ Добавить способ</button>
+    </div>
+  </div>
+  <div class="card mt">
+    <div class="card-h"><h3>История платежей</h3></div>
+    <div class="table-wrap" style="border:0">
+      <table>
+        <thead><tr><th>Дата</th><th>Заказ</th><th>Сумма</th><th>Способ</th><th>Статус</th></tr></thead>
+        <tbody>
+          <tr><td>12.05.2026</td><td>#1042</td><td class="t-mono">22 500 ₽</td><td>Visa •••• 4421</td><td><span class="badge badge--green">Проведён</span></td></tr>
+          <tr><td>21.04.2026</td><td>#1021</td><td class="t-mono">4 000 ₽</td><td>Перевод</td><td><span class="badge badge--green">Проведён</span></td></tr>
+          <tr><td>03.04.2026</td><td>#1008</td><td class="t-mono">0 ₽</td><td>—</td><td><span class="badge badge--gray">Без оплаты</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

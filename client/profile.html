@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Профиль — Кабинет клиента</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="client" data-page="profile" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Профиль</h1><p class="page-sub">Личные данные и настройки аккаунта.</p></div></div>
+  <div class="cols">
+    <form class="card" onsubmit="event.preventDefault(); window.toast('Изменения сохранены','success');">
+      <h3>Личные данные</h3>
+      <div class="form mt-sm">
+        <div class="form-row">
+          <div class="field"><label for="p-name">ФИО</label><input id="p-name" value="Морозова Анна Сергеевна"></div>
+          <div class="field"><label for="p-phone">Телефон</label><input id="p-phone" value="+7 916 000-00-00"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label for="p-email">Email</label><input id="p-email" type="email" value="morozova@example.ru"></div>
+          <div class="field"><label for="p-city">Город</label><input id="p-city" value="Москва"></div>
+        </div>
+        <button class="btn btn-primary" type="submit">Сохранить</button>
+      </div>
+    </form>
+    <div class="grid" style="gap:18px">
+      <form class="card" onsubmit="event.preventDefault(); window.toast('Пароль обновлён','success');">
+        <h3>Безопасность</h3>
+        <div class="form mt-sm">
+          <div class="field"><label for="p-old">Текущий пароль</label><input id="p-old" type="password" placeholder="••••••••"></div>
+          <div class="field"><label for="p-new">Новый пароль</label><input id="p-new" type="password" placeholder="••••••••"></div>
+          <button class="btn" type="submit">Сменить пароль</button>
+        </div>
+      </form>
+      <div class="card">
+        <h3>Уведомления</h3>
+        <label class="checkbox"><input type="checkbox" checked> Email о статусе заказа</label>
+        <label class="checkbox"><input type="checkbox" checked> SMS о платежах</label>
+        <label class="checkbox"><input type="checkbox"> Новости и акции</label>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>
