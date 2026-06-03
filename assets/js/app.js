@@ -1,10 +1,10 @@
-/* Общий каркас интерфейса: топбар, сайдбар по зонам, тосты, демо-переключатель ролей. */
+/* Общий каркас интерфейса (тема: бюро ритуальных услуг): топбар, сайдбар, тосты, демо-переключатель ролей, анимации появления. */
 (function () {
   var body = document.body;
   var zone = body.dataset.zone || 'public';
   var page = body.dataset.page || '';
   var root = body.dataset.root || '';
-  var BRAND = 'Сервис-Заказы';
+  var BRAND = 'Вечная Память';
 
   var ZONES = {
     public:   { label: 'Публичный сайт',     home: 'index.html' },
@@ -62,12 +62,13 @@
   };
 
   function L(href){ return root + href; }
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- Toast ---------- */
   var host = document.createElement('div'); host.className = 'toast-host'; document.body.appendChild(host);
   window.toast = function (msg, type) {
     var t = document.createElement('div'); t.className = 'toast' + (type ? ' ' + type : '');
-    t.innerHTML = (type==='success'?'✅ ':type==='error'?'⚠️ ':'🔔 ') + msg;
+    t.innerHTML = (type==='success'?'✅ ':type==='error'?'⚠️ ':'🕯️ ') + msg;
     host.appendChild(t);
     setTimeout(function(){ t.style.opacity='0'; t.style.transform='translateY(8px)'; setTimeout(function(){ t.remove(); }, 200); }, 2800);
   };
@@ -88,7 +89,7 @@
   var header = document.createElement('header'); header.className='topbar';
   var menuBtn = '';
   if (zone !== 'public') menuBtn = '<button class="menu-btn" id="menuBtn" aria-label="Меню">☰</button>';
-  var brand = '<a class="brand" href="'+L('index.html')+'"><span class="logo">◆</span>'+BRAND+'</a>';
+  var brand = '<a class="brand" href="'+L('index.html')+'"><span class="logo"><span class="flame"></span></span>'+BRAND+'</a>';
   var topnav = '';
   if (zone === 'public') {
     topnav = '<nav class="topnav">' + PUBLIC_NAV.map(function(n){
@@ -158,4 +159,30 @@
     var el = e.target.closest('[data-toast]');
     if (el){ e.preventDefault(); window.toast(el.getAttribute('data-toast'), el.getAttribute('data-toast-type')||''); }
   });
+
+  /* ---------- Scroll reveal animations (tasteful, no HTML changes) ---------- */
+  (function setupReveal(){
+    var selector = '.card, .stat, .feature, .svc, .step, .table-wrap, .timeline .tl-item, .section-title, .page-head, .hero-inner > *, .notice';
+    var els = Array.prototype.slice.call(document.querySelectorAll(selector));
+    if (!els.length) return;
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      els.forEach(function(el){ el.classList.add('reveal','in-view'); });
+      return;
+    }
+    els.forEach(function(el){ el.classList.add('reveal'); });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (!en.isIntersecting) return;
+        var el = en.target;
+        var sibs = el.parentNode ? Array.prototype.slice.call(el.parentNode.children).filter(function(c){ return c.classList && c.classList.contains('reveal'); }) : [el];
+        var idx = Math.max(0, sibs.indexOf(el));
+        el.style.transitionDelay = Math.min(idx * 70, 420) + 'ms';
+        el.classList.add('in-view');
+        io.unobserve(el);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    els.forEach(function(el){ io.observe(el); });
+    /* Safety net: reveal everything after 1.4s in case observer misses */
+    setTimeout(function(){ els.forEach(function(el){ el.classList.add('in-view'); }); }, 1400);
+  })();
 })();
