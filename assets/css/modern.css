@@ -75,6 +75,11 @@ body.scrolled .topbar{box-shadow:0 10px 30px -18px rgba(26,44,38,.55)}
 
 /* ---------- Таблицы / бейджи / аватар ---------- */
 .table-wrap{border-radius:16px;overflow:hidden}
+/* Fix: .table-wrap имеет overflow:hidden и становится скролл-контейнером для
+   sticky-шапки. thead th{top:66px} прилипал на 66px ниже верха контейнера,
+   который сам не прокручивается → пустая белая полоса над заголовком.
+   Контейнер не скроллится, пользы от sticky нет → делаем шапку статичной. */
+thead th{position:static;top:auto}
 .badge{border-radius:999px}
 .avatar{box-shadow:0 6px 14px -8px rgba(0,0,0,.4)}
 
