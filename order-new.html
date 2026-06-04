@@ -3,49 +3,91 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Оформление заказа — Сервис-Заказы</title>
+<title>Оформление заявки — Вечная Память</title>
 <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body data-zone="public" data-page="order" data-root="">
 <div class="container section-sm">
-  <div class="breadcrumbs"><a href="index.html">Главная</a> / Оформление заказа</div>
+  <div class="breadcrumbs"><a href="index.html">Главная</a> / Оформление заявки</div>
   <h1 class="page-title">Оформление заявки</h1>
   <p class="page-sub">Заполните данные — менеджер свяжется для подтверждения.</p>
 
   <div class="cols mt">
-    <form class="card" onsubmit="event.preventDefault(); window.toast('Заявка успешно отправлена — номер #1043', 'success');">
+    <form id="order-form" class="card">
       <h3>Данные клиента</h3>
       <div class="form mt-sm">
         <div class="form-row">
-          <div class="field"><label>ФИО</label><input required placeholder="Иванов ИванИванович"></div>
-          <div class="field"><label>Телефон</label><input required placeholder="+7 …"></div>
+          <div class="field"><label>ФИО</label><input id="order-name" required placeholder="Иванов Иван Иванович"></div>
+          <div class="field"><label>Телефон</label><input id="order-phone" required placeholder="+7 …"></div>
         </div>
         <div class="form-row">
-          <div class="field"><label>Email</label><input type="email" placeholder="mail@example.ru"></div>
-          <div class="field"><label>Способ связи</label><select><option>Телефон</option><option>Email</option><option>Мессенджер</option></select></div>
+          <div class="field"><label>Email</label><input id="order-email" type="email" placeholder="mail@example.ru"></div>
+          <div class="field"><label>Способ связи</label><select id="order-contact"><option>Телефон</option><option>Email</option><option>Мессенджер</option></select></div>
         </div>
         <hr class="divider">
-        <h3>Детали заказа</h3>
+        <h3>Детали заявки</h3>
         <div class="form-row">
-          <div class="field"><label>Предпочтительная дата</label><input type="date"></div>
-          <div class="field"><label>Время</label><input type="time"></div>
+          <div class="field"><label>Предпочтительная дата</label><input id="order-date" type="date"></div>
+          <div class="field"><label>Время</label><input id="order-time" type="time"></div>
         </div>
-        <div class="field"><label>Комментарий</label><textarea placeholder="Уточните пожелания…"></textarea></div>
-        <label class="checkbox"><input type="checkbox" required> Согласен на обработку персональных данных</label>
+        <div class="field"><label>Комментарий</label><textarea id="order-comment" placeholder="Уточните пожелания…"></textarea></div>
+        <label class="checkbox"><input id="order-consent" type="checkbox" required> Согласен на обработку персональных данных</label>
         <button class="btn btn-primary btn-block" type="submit">Отправить заявку</button>
       </div>
     </form>
 
     <aside class="card">
-      <h3>Ваш заказ</h3>
-      <div class="list-row"><span>Полный цикл под ключ</span><b>25 000 ₽</b></div>
-      <div class="list-row"><span>Подача транспорта</span><b>6 000 ₽</b></div>
-      <div class="list-row"><span>Оформление декора</span><b>3 500 ₽</b></div>
-      <div class="list-row" style="font-size:18px"><b>Итого</b><b class="price">34 500 ₽</b></div>
-      <div class="notice mt">💡 Итоговая сумма предварительная и будет уточнена менеджером.</div>
+      <h3>Ориентировочные цены</h3>
+      <div id="svc-list">
+        <div class="list-row"><span>Загрузка каталога…</span><b></b></div>
+      </div>
+      <div class="notice mt">💡 Итоговая сумма предварительная и будет уточнена менеджером после консультации.</div>
     </aside>
   </div>
 </div>
+<script src="assets/js/api.js"></script>
+<script>
+document.getElementById('order-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  if(!document.getElementById('order-consent').checked){ window.toast('Подтвердите согласие на обработку ПДн', 'error'); return; }
+  var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
+  var parts = [];
+  var d = document.getElementById('order-date').value;
+  var tm = document.getElementById('order-time').value;
+  var way = document.getElementById('order-contact').value;
+  var comment = document.getElementById('order-comment').value.trim();
+  if(d) parts.push('Желаемая дата: ' + d + (tm ? (' ' + tm) : ''));
+  if(way) parts.push('Способ связи: ' + way);
+  if(comment) parts.push(comment);
+  window.API.requests.create({
+    client_name: document.getElementById('order-name').value.trim(),
+    phone: document.getElementById('order-phone').value.trim() || null,
+    email: document.getElementById('order-email').value.trim() || null,
+    message: parts.join(' | ') || null,
+    source: 'site',
+    pdn_consent: true
+  }).then(function(r){
+    window.toast('Заявка отправлена — №' + r.id, 'success');
+    document.getElementById('order-form').reset();
+    btn.disabled = false;
+  }).catch(function(err){
+    window.toast('Ошибка отправки: ' + err.message, 'error');
+    btn.disabled = false;
+  });
+});
+
+window.API.services.list(true).then(function(list){
+  var box = document.getElementById('svc-list');
+  if(!box) return;
+  if(!list || !list.length){ box.innerHTML = '<div class="list-row"><span>Каталог пуст</span><b></b></div>'; return; }
+  box.innerHTML = list.slice(0,6).map(function(s){
+    return '<div class="list-row"><span>' + s.name + '</span><b>' + window.API.fmtPrice(s.base_price) + '</b></div>';
+  }).join('');
+}).catch(function(){
+  var box = document.getElementById('svc-list');
+  if(box) box.innerHTML = '<div class="list-row"><span>Каталог недоступен (офлайн)</span><b></b></div>';
+});
+</script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

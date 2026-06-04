@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Каталог услуг — Сервис-Заказы</title>
+<title>Каталог услуг — Вечная Память</title>
 <link rel="stylesheet" href="assets/css/styles.css">
 <link rel="stylesheet" href="assets/css/cards.css">
 </head>
@@ -11,30 +11,73 @@
 <div class="container section-sm">
   <div class="breadcrumbs"><a href="index.html">Главная</a> / Каталог услуг</div>
   <h1 class="page-title">Каталог услуг</h1>
-  <p class="page-sub">Выберите услуги и добавьте их в заказ.</p>
+  <p class="page-sub">Актуальные услуги и цены бюро «Вечная Память».</p>
 
   <div class="filters mt">
-    <div class="chips">
-      <span class="chip active">Все</span>
-      <span class="chip">Организация</span>
-      <span class="chip">Транспорт</span>
-      <span class="chip">Документы</span>
-      <span class="chip">Дополнительные</span>
+    <div class="chips" id="cat-chips">
+      <span class="chip active" data-cat="">Все</span>
     </div>
-    <div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск услуги…"></div>
+    <div class="search" style="margin-left:auto"><input id="svc-search" class="input" placeholder="Поиск услуги…"></div>
   </div>
 
-  <div class="grid g-3 mt">
-    <article class="svc"><div class="svc-head"><span class="svc-ico">🧭</span><span class="svc-tag">Организация</span></div><div class="svc-body"><h4>Полный цикл под ключ</h4><p>Комплексное сопровождение заказа.</p></div><div class="foot"><span class="price">от 25 000 ₽</span><button class="btn btn-sm btn-primary" data-toast="Услуга добавлена в заказ" data-toast-type="success">В заказ →</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">🚐</span><span class="svc-tag">Транспорт</span></div><div class="svc-body"><h4>Подача транспорта</h4><p>Сопровождение и логистика.</p></div><div class="foot"><span class="price">от 6 000 ₽</span><button class="btn btn-sm btn-primary" data-toast="Услуга добавлена в заказ" data-toast-type="success">В заказ →</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">📜</span><span class="svc-tag">Документы</span></div><div class="svc-body"><h4>Оформление документов</h4><p>Подготовка и подача.</p></div><div class="foot"><span class="price">по запросу</span><button class="btn btn-sm btn-primary" data-toast="Услуга добавлена в заказ" data-toast-type="success">В заказ →</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">🕯️</span><span class="svc-tag">Дополнительные</span></div><div class="svc-body"><h4>Церемония</h4><p>Организация и проведение.</p></div><div class="foot"><span class="price">от 12 000 ₽</span><button class="btn btn-sm btn-primary" data-toast="Услуга добавлена в заказ" data-toast-type="success">В заказ →</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">💐</span><span class="svc-tag">Дополнительные</span></div><div class="svc-body"><h4>Оформление</h4><p>Декор и атрибутика.</p></div><div class="foot"><span class="price">от 3 500 ₽</span><button class="btn btn-sm btn-primary" data-toast="Услуга добавлена в заказ" data-toast-type="success">В заказ →</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">🤝</span><span class="svc-tag">Организация</span></div><div class="svc-body"><h4>Консультация</h4><p>Помощь и сопровождение.</p></div><div class="foot"><span class="price">бесплатно</span><button class="btn btn-sm btn-primary" data-toast="Услуга добавлена в заказ" data-toast-type="success">В заказ →</button></div></article>
+  <div class="grid g-3 mt" id="svc-grid">
+    <p class="page-sub">Загрузка каталога…</p>
   </div>
 
-  <div class="cta-row mt" style="justify-content:center"><a class="btn btn-primary" href="order-new.html">Перейти к оформлению</a></div>
+  <div class="cta-row mt" style="justify-content:center"><a class="btn btn-primary" href="order-new.html">Перейти к оформлению заявки</a></div>
 </div>
+<script src="assets/js/api.js"></script>
+<script>
+(function(){
+  var grid = document.getElementById('svc-grid');
+  var chipsBox = document.getElementById('cat-chips');
+  var search = document.getElementById('svc-search');
+  var all = [];
+
+  function activeCat(){ var a = chipsBox.querySelector('.chip.active'); return a ? (a.getAttribute('data-cat') || '') : ''; }
+
+  function render(){
+    var q = (search.value || '').trim().toLowerCase();
+    var cat = activeCat();
+    var rows = all.filter(function(s){
+      var okCat = !cat || s.category === cat;
+      var okQ = !q || (s.name || '').toLowerCase().indexOf(q) >= 0 || (s.code || '').toLowerCase().indexOf(q) >= 0;
+      return okCat && okQ;
+    });
+    if(!rows.length){ grid.innerHTML = '<p class="page-sub">Ничего не найдено.</p>'; return; }
+    grid.innerHTML = rows.map(function(s){
+      return '<article class="svc">' +
+        '<div class="svc-head"><span class="svc-ico">🕯️</span><span class="svc-tag">' + (s.category || 'Услуга') + '</span></div>' +
+        '<div class="svc-body"><h4>' + s.name + '</h4><p>Код: ' + s.code + '</p></div>' +
+        '<div class="foot"><span class="price">' + window.API.fmtPrice(s.base_price) + '</span>' +
+        '<a class="btn btn-sm btn-primary" href="order-new.html">В заявку →</a></div></article>';
+    }).join('');
+  }
+
+  function buildChips(){
+    var cats = [];
+    all.forEach(function(s){ if(s.category && cats.indexOf(s.category) < 0) cats.push(s.category); });
+    chipsBox.innerHTML = '<span class="chip active" data-cat="">Все</span>' +
+      cats.map(function(c){ return '<span class="chip" data-cat="' + c + '">' + c + '</span>'; }).join('');
+    chipsBox.querySelectorAll('.chip').forEach(function(ch){
+      ch.addEventListener('click', function(){
+        chipsBox.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('active'); });
+        ch.classList.add('active');
+        render();
+      });
+    });
+  }
+
+  window.API.services.list(true).then(function(list){
+    all = list || [];
+    buildChips();
+    search.addEventListener('input', render);
+    render();
+  }).catch(function(){
+    grid.innerHTML = '<p class="page-sub">Не удалось загрузить каталог. Убедитесь, что API запущен на ' + window.API.base + '.</p>';
+  });
+})();
+</script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>
