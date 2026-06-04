@@ -3,53 +3,66 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Заказ #1042 — Кабинет клиента</title>
+<title>Заказ — Кабинет партнёра</title>
 <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 <body data-zone="client" data-page="orders" data-root="../">
 <main id="view">
-  <div class="breadcrumbs"><a href="orders.html">Мои заказы</a> / Заказ #1042</div>
+  <div class="breadcrumbs"><a href="orders.html">Мои заказы</a> / <span id="crumb">Заказ</span></div>
   <div class="page-head">
-    <div><h1 class="page-title">Заказ #1042 <span class="badge badge--amber" style="vertical-align:middle">В работе</span></h1><p class="page-sub">Создан 12.05.2026 · Менеджер: И. Сафронов</p></div>
-    <div class="quick-actions">
-      <button class="btn btn-primary" data-toast="Переход к оплате (скоро)" data-toast-type="error">Оплатить</button>
-      <button class="btn" data-toast="Сообщение менеджеру (скоро)" data-toast-type="error">Задать вопрос</button>
-    </div>
+    <div><h1 class="page-title" id="title">Заказ</h1><p class="page-sub" id="sub">Загрузка…</p></div>
   </div>
-
   <div class="cols">
     <div class="grid" style="gap:18px">
       <div class="card">
         <div class="card-h"><h3>Состав заказа</h3></div>
-        <div class="list-row"><span>Полный цикл под ключ</span><b>25 000 ₽</b></div>
-        <div class="list-row"><span>Подача транспорта</span><b>6 000 ₽</b></div>
-        <div class="list-row"><span>Оформление декора</span><b>3 500 ₽</b></div>
-        <div class="list-row" style="font-size:17px"><b>Итого</b><b class="price">34 500 ₽</b></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>Ход выполнения</h3></div>
-        <div class="timeline">
-          <div class="tl-item done"><div class="tl-t">Заявка создана</div><div class="tl-d">12.05.2026, 10:24</div></div>
-          <div class="tl-item done"><div class="tl-t">Подтверждена менеджером</div><div class="tl-d">12.05.2026, 11:40</div></div>
-          <div class="tl-item current"><div class="tl-t">Выполнение работ</div><div class="tl-d">В процессе</div></div>
-          <div class="tl-item"><div class="tl-t">Завершение и закрытие</div><div class="tl-d">Ожидается</div></div>
-        </div>
+        <div id="items"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div>
       </div>
     </div>
     <div class="grid" style="gap:18px">
       <div class="card">
         <div class="card-h"><h3>Оплата</h3></div>
-        <div class="list-row"><span>Аванс</span><span><b>22 500 ₽</b> <span class="badge badge--green">Оплачен</span></span></div>
-        <div class="list-row"><span>Остаток</span><span><b>12 000 ₽</b> <span class="badge badge--red">К оплате</span></span></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>Документы</h3></div>
-        <div class="list-row"><span>📄 Договор № 1042</span><span class="badge badge--green">Подписан</span></div>
-        <div class="list-row"><span>📄 Счёт на оплату</span><span class="badge badge--amber">Ожидает</span></div>
+        <div id="pays"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div>
       </div>
     </div>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
+  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  var PB={ pending:['Ожидает','amber'], paid:['Оплачен','green'] };
+  function pbadge(st){ var v=PB[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
+  var id=new URLSearchParams(location.search).get('id');
+  if(!id){ document.getElementById('sub').textContent='Заказ не указан.'; return; }
+  var svcMap={};
+  function renderItems(o){
+    var box=document.getElementById('items');
+    var html=(o.items||[]).map(function(it){
+      var nm=svcMap[it.service_id]||('Услуга #'+it.service_id);
+      return '<div class="list-row"><span>'+nm+' <span class="t-muted">×'+it.qty+'</span></span><b>'+window.API.fmtPrice(it.sum)+'</b></div>';
+    }).join('');
+    html += '<div class="list-row" style="font-size:17px"><b>Итого</b><b class="price">'+window.API.fmtPrice(o.total_amount)+'</b></div>';
+    box.innerHTML=html;
+  }
+  window.API.services.list().then(function(s){ (s||[]).forEach(function(x){ svcMap[x.id]=x.name; }); }).catch(function(){}).then(function(){
+    return window.API.orders.get(id);
+  }).then(function(o){
+    document.getElementById('crumb').textContent=o.number;
+    document.getElementById('title').innerHTML=o.number+' '+badge(o.status);
+    document.getElementById('sub').textContent='Создан '+fmtDate(o.created_at);
+    renderItems(o);
+  }).catch(function(err){ document.getElementById('sub').textContent=(err.status===404?'Заказ не найден.':(err.status===401?'Требуется вход.':'Ошибка загрузки.')); document.getElementById('items').innerHTML=''; });
+  window.API.payments.list(id).then(function(list){
+    list=list||[]; var box=document.getElementById('pays');
+    box.innerHTML = list.length ? list.map(function(p){
+      return '<div class="list-row"><span>'+window.API.fmtPrice(p.amount)+'</span>'+pbadge(p.status)+'</div>';
+    }).join('') : '<div class="list-row"><span class="t-muted">Платежей пока нет.</span></div>';
+  }).catch(function(){ document.getElementById('pays').innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить оплаты.</span></div>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

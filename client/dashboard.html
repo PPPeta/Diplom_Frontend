@@ -3,45 +3,60 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Кабинет клиента — Главная</title>
+<title>Кабинет партнёра — Главная</title>
 <link rel="stylesheet" href="../assets/css/styles.css">
 <link rel="stylesheet" href="../assets/css/polish.css">
 </head>
 <body data-zone="client" data-page="dashboard" data-root="../">
 <main id="view">
   <div class="page-head">
-    <div><h1 class="page-title">Здравствуйте, Анна 👋</h1><p class="page-sub">Сводка по вашим заказам и событиям.</p></div>
+    <div><h1 class="page-title" id="hello">Здравствуйте 👋</h1><p class="page-sub">Сводка по вашим заказам и расчётам.</p></div>
     <a class="btn btn-primary" href="../order-new.html">+ Новый заказ</a>
   </div>
-
   <div class="grid g-3">
-    <div class="stat"><div class="lbl"><span class="ic">📑</span> Активные заказы</div><div class="num">2</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">💳</span> К оплате</div><div class="num">12 000 ₽</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">📄</span> Документов</div><div class="num">3</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">📑</span> Активные заказы</div><div class="num" id="s-active">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">💳</span> К оплате</div><div class="num" id="s-due">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">🧾</span> Всего заказов</div><div class="num" id="s-total">—</div></div>
   </div>
-
   <div class="cols mt">
     <div class="card">
       <div class="card-h"><h3>Активные заказы</h3><a class="btn btn-sm" href="orders.html">Все заказы</a></div>
-      <div class="list-row"><div><b>Заказ #1042</b><br><span class="t-muted">Полный цикл · от 12.05</span></div><div style="text-align:right"><span class="badge badge--amber">В работе</span><br><a class="btn btn-sm mt-sm" href="order.html">Открыть</a></div></div>
-      <div class="list-row"><div><b>Заказ #1039</b><br><span class="t-muted">Транспорт · от 08.05</span></div><div style="text-align:right"><span class="badge badge--blue">Новый</span><br><a class="btn btn-sm mt-sm" href="order.html">Открыть</a></div></div>
+      <div id="active-list"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div>
     </div>
     <div class="card">
-      <div class="card-h"><h3>Уведомления</h3></div>
-      <a class="list-row row-link" href="messages.html"><span>💬 Новое сообщение от менеджера</span></a>
-      <a class="list-row row-link" href="documents.html"><span>📄 Требуется подписать договор</span></a>
-      <a class="list-row row-link" href="payments.html"><span>💳 Счёт на 12 000 ₽ ожидает оплаты</span></a>
+      <div class="card-h"><h3>Быстрые действия</h3></div>
+      <a class="list-row row-link" href="../order-new.html"><span>➕ Создать новый заказ</span></a>
+      <a class="list-row row-link" href="payments.html"><span>💳 Перейти к взаиморасчётам</span></a>
+      <a class="list-row row-link" href="orders.html"><span>📑 История заказов</span></a>
     </div>
   </div>
-
-  <div class="section-h"><h2>Быстрые действия</h2></div>
-  <div class="quick-actions">
-    <a class="btn btn-primary" href="../order-new.html">Создать заказ</a>
-    <a class="btn" href="payments.html">Оплатить счёт</a>
-    <a class="btn" href="documents.html">Открыть документы</a>
-    <a class="btn" href="messages.html">Написать менеджеру</a>
-  </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
+  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  if(window.API && window.API.isAuthed && window.API.isAuthed()){
+    var nm=null; try{ nm=window.API.decodeJwt?null:null; }catch(e){}
+    var name=(localStorage.getItem('vp_name')||'').trim();
+    if(name) document.getElementById('hello').textContent='Здравствуйте, '+name+' 👋';
+  }
+  window.API.orders.list().then(function(list){
+    list=list||[];
+    var active=list.filter(function(o){ return ['new','confirmed','in_progress'].indexOf(o.status)>=0; });
+    document.getElementById('s-active').textContent=active.length;
+    document.getElementById('s-total').textContent=list.length;
+    var box=document.getElementById('active-list');
+    box.innerHTML = active.length ? active.slice(0,6).map(function(o){
+      return '<a class="list-row row-link" href="order.html?id='+o.id+'"><div><b>'+o.number+'</b><br><span class="t-muted">'+window.API.fmtPrice(o.total_amount)+'</span></div><div>'+badge(o.status)+'</div></a>';
+    }).join('') : '<div class="list-row"><span class="t-muted">Активных заказов нет.</span></div>';
+  }).catch(function(err){ document.getElementById('active-list').innerHTML='<div class="list-row"><span class="t-muted">'+(err.status===401?'Требуется вход.':'Не удалось загрузить заказы.')+'</span></div>'; });
+  window.API.payments.list().then(function(list){
+    list=list||[]; var due=0; list.forEach(function(p){ if(p.status!=='paid') due+=Number(p.amount)||0; });
+    document.getElementById('s-due').textContent=window.API.fmtPrice(due);
+  }).catch(function(){ document.getElementById('s-due').textContent='—'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>
