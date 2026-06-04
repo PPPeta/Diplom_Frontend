@@ -3,50 +3,93 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Вход и регистрация — Сервис-Заказы</title>
+<title>Вход и регистрация — Вечная Память</title>
 <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body data-zone="public" data-page="login" data-root="">
-<div class="container" style="max-width:460px;padding-top:48px;padding-bottom:48px">
+<div class="container section-sm" style="max-width:480px">
   <div class="card">
-    <div class="tabs">
-      <div class="tab active" id="t-login" onclick="switchTab('login')">Вход</div>
-      <div class="tab" id="t-reg" onclick="switchTab('reg')">Регистрация</div>
+    <div class="tabs" style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn btn-sm active" id="tab-login" type="button" onclick="switchTab('login')">Вход</button>
+      <button class="btn btn-sm" id="tab-reg" type="button" onclick="switchTab('reg')">Регистрация партнёра</button>
     </div>
 
-    <form id="form-login" class="form" onsubmit="event.preventDefault(); window.toast('Вход выполнен', 'success'); setTimeout(function(){location.href='client/dashboard.html';},700);">
-      <div class="field"><label>Email или телефон</label><input required placeholder="mail@example.ru"></div>
-      <div class="field"><label>Пароль</label><input type="password" required placeholder="••••••••"></div>
-      <div style="text-align:right"><a class="btn btn-ghost btn-sm" href="#" data-toast="Ссылка для восстановления отправлена">Забыли пароль?</a></div>
+    <form id="form-login" class="form">
+      <div class="field"><label>Email</label><input id="login-email" type="email" required placeholder="mail@example.ru"></div>
+      <div class="field"><label>Пароль</label><input id="login-password" type="password" required placeholder="••••••••"></div>
       <button class="btn btn-primary btn-block" type="submit">Войти</button>
     </form>
 
-    <form id="form-reg" class="form" style="display:none" onsubmit="event.preventDefault(); window.toast('Аккаунт создан, подтвердите email', 'success');">
-      <div class="field"><label>Имя</label><input required></div>
-      <div class="field"><label>Email</label><input type="email" required></div>
-      <div class="field"><label>Телефон</label><input required></div>
-      <div class="field"><label>Пароль</label><input type="password" required></div>
-      <label class="checkbox"><input type="checkbox" required> Согласен на обработку персональных данных</label>
+    <form id="form-reg" class="form" style="display:none">
+      <p class="page-sub" style="margin:0 0 6px">Регистрация — для компаний-партнёров (страховые, корпоративные, смежные службы). Частному клиенту аккаунт не нужен: оставьте <a href="order-new.html">заявку</a>.</p>
+      <div class="field"><label>Название организации</label><input id="reg-org" required placeholder="ООО «…»"></div>
+      <div class="form-row">
+        <div class="field"><label>ИНН</label><input id="reg-inn" placeholder="необязательно"></div>
+        <div class="field"><label>Тип партнёра</label><select id="reg-type"><option value="insurance">Страховая</option><option value="corporate">Корпоративный</option><option value="allied">Смежная служба</option></select></div>
+      </div>
+      <div class="field"><label>Контактное лицо</label><input id="reg-name" required placeholder="Фамилия Имя"></div>
+      <div class="field"><label>Email</label><input id="reg-email" type="email" required placeholder="mail@example.ru"></div>
+      <div class="field"><label>Пароль</label><input id="reg-password" type="password" required minlength="8" placeholder="минимум 8 символов"></div>
+      <label class="checkbox"><input id="reg-consent" type="checkbox" required> Согласен на обработку персональных данных</label>
       <button class="btn btn-primary btn-block" type="submit">Зарегистрироваться</button>
     </form>
 
     <hr class="divider">
-    <p class="t-muted" style="font-size:13px;text-align:center">Демо-вход в рабочие кабинеты:</p>
-    <div class="quick-actions" style="justify-content:center">
-      <a class="btn btn-sm" href="client/dashboard.html">Клиент</a>
+    <p class="page-sub" style="text-align:center;margin:0 0 8px">Демо-вход в кабинеты (без авторизации):</p>
+    <div class="quick-actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <a class="btn btn-sm" href="client/dashboard.html">Партнёр</a>
       <a class="btn btn-sm" href="staff/dashboard.html">Менеджер</a>
       <a class="btn btn-sm" href="executor/tasks.html">Исполнитель</a>
       <a class="btn btn-sm" href="admin/users.html">Админ</a>
     </div>
   </div>
 </div>
+<script src="assets/js/api.js"></script>
 <script>
 function switchTab(t){
-  document.getElementById('t-login').classList.toggle('active', t==='login');
-  document.getElementById('t-reg').classList.toggle('active', t==='reg');
-  document.getElementById('form-login').style.display = t==='login'?'grid':'none';
-  document.getElementById('form-reg').style.display = t==='reg'?'grid':'none';
+  var isLogin = t==='login';
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-reg').classList.toggle('active', !isLogin);
+  document.getElementById('form-login').style.display = isLogin ? '' : 'none';
+  document.getElementById('form-reg').style.display = isLogin ? 'none' : '';
 }
+document.getElementById('form-login').addEventListener('submit', function(e){
+  e.preventDefault();
+  var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
+  window.API.login(
+    document.getElementById('login-email').value.trim(),
+    document.getElementById('login-password').value
+  ).then(function(){
+    window.toast('Вход выполнен', 'success');
+    var r = window.API.role();
+    setTimeout(function(){ location.href = window.API.homeForRole(r); }, 600);
+  }).catch(function(err){
+    window.toast(err.status===401 ? 'Неверный email или пароль' : ('Ошибка входа: ' + err.message), 'error');
+    btn.disabled = false;
+  });
+});
+document.getElementById('form-reg').addEventListener('submit', function(e){
+  e.preventDefault();
+  if(!document.getElementById('reg-consent').checked){ window.toast('Подтвердите согласие на обработку ПДн', 'error'); return; }
+  var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
+  window.API.registerPartner({
+    email: document.getElementById('reg-email').value.trim(),
+    password: document.getElementById('reg-password').value,
+    full_name: document.getElementById('reg-name').value.trim(),
+    partner: {
+      org_name: document.getElementById('reg-org').value.trim(),
+      type: document.getElementById('reg-type').value,
+      inn: document.getElementById('reg-inn').value.trim() || null
+    }
+  }).then(function(){
+    window.toast('Партнёр зарегистрирован — войдите в систему', 'success');
+    switchTab('login');
+    btn.disabled = false;
+  }).catch(function(err){
+    window.toast('Ошибка регистрации: ' + err.message, 'error');
+    btn.disabled = false;
+  });
+});
 </script>
 <script src="assets/js/app.js"></script>
 </body>
