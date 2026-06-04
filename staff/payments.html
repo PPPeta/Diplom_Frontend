@@ -8,24 +8,54 @@
 </head>
 <body data-zone="staff" data-page="payments" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Платежи и счета</h1><p class="page-sub">Учёт оплат по заказам.</p></div><button class="btn btn-primary" data-toast="Выставление счёта (скоро)" data-toast-type="error">+ Выставить счёт</button></div>
-  <div class="grid g-4">
-    <div class="stat"><div class="lbl"><span class="ic">💰</span> Ожидают оплаты</div><div class="num">86 500 ₽</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">✅</span> Оплачено за месяц</div><div class="num">412 000 ₽</div><div class="delta up">+8%</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">⏰</span> Просрочено</div><div class="num">15 000 ₽</div><div class="delta down">2 счёта</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">🧾</span> Счетов всего</div><div class="num">34</div></div>
+  <div class="page-head"><div><h1 class="page-title">Платежи и счета</h1><p class="page-sub">Учёт оплат по заказам.</p></div></div>
+  <div class="grid g-4" id="stats">
+    <div class="stat"><div class="lbl"><span class="ic">💰</span> Ожидают оплаты</div><div class="num" id="s-pending">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">✅</span> Оплачено</div><div class="num" id="s-paid">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">🧾</span> Платежей всего</div><div class="num" id="s-count">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">↩️</span> Комиссии</div><div class="num" id="s-comm">—</div></div>
   </div>
   <div class="table-wrap mt">
     <table>
-      <thead><tr><th>Счёт</th><th>Заказ</th><th>Клиент</th><th>Сумма</th><th>Срок</th><th>Статус</th></tr></thead>
-      <tbody>
-        <tr><td class="t-strong">№ 1042-1</td><td>#1042</td><td>А. Морозова</td><td class="t-mono">12 000 ₽</td><td>15.05</td><td><span class="badge badge--amber">Ожидает</span></td></tr>
-        <tr><td class="t-strong">№ 1040-1</td><td>#1040</td><td>К. Иванова</td><td class="t-mono">15 000 ₽</td><td>10.05</td><td><span class="badge badge--red">Просрочен</span></td></tr>
-        <tr><td class="t-strong">№ 1037-2</td><td>#1037</td><td>Г. Лебедев</td><td class="t-mono">28 000 ₽</td><td>08.05</td><td><span class="badge badge--green">Оплачен</span></td></tr>
-      </tbody>
+      <thead><tr><th>№</th><th>Заказ</th><th>Направление</th><th>Тип</th><th>Сумма</th><th>Статус</th><th></th></tr></thead>
+      <tbody id="rows"><tr><td colspan="7" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var DIR={ in:'Входящий', out:'Исходящий' };
+  var KIND={ payment:'Оплата', commission:'Комиссия' };
+  var rows=document.getElementById('rows');
+  var all=[];
+  function badge(st){ var m={pending:['Ожидает','amber'],paid:['Оплачен','green']}; var v=m[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function num(v){ return Number(v)||0; }
+  function recalc(){
+    var pending=0,paid=0,comm=0;
+    all.forEach(function(p){ var a=num(p.amount); if(p.status==='paid') paid+=a; else pending+=a; if(p.kind==='commission') comm+=a; });
+    document.getElementById('s-pending').textContent=window.API.fmtPrice(pending);
+    document.getElementById('s-paid').textContent=window.API.fmtPrice(paid);
+    document.getElementById('s-count').textContent=all.length;
+    document.getElementById('s-comm').textContent=window.API.fmtPrice(comm);
+  }
+  function render(){
+    if(!all.length){ rows.innerHTML='<tr><td colspan="7" class="t-muted">Платежей нет.</td></tr>'; return; }
+    rows.innerHTML=all.map(function(p){
+      var act = p.status!=='paid' ? '<button class="btn btn-sm btn-primary" data-pay="'+p.id+'">Оплачен</button>' : '';
+      return '<tr><td class="t-strong">#'+p.id+'</td><td>#'+p.order_id+'</td><td>'+(DIR[p.direction]||p.direction)+'</td><td>'+(KIND[p.kind]||p.kind)+'</td><td class="t-mono">'+window.API.fmtPrice(p.amount)+'</td><td>'+badge(p.status)+'</td><td>'+act+'</td></tr>';
+    }).join('');
+  }
+  rows.addEventListener('click', function(e){
+    var btn=e.target.closest('button[data-pay]'); if(!btn) return;
+    var id=btn.getAttribute('data-pay'); btn.disabled=true;
+    window.API.request('/payments/'+id+'/status', { method:'PATCH', json:{ status:'paid' } }).then(function(){ window.toast('Платёж отмечен оплаченным','success'); var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.status='paid'; recalc(); render(); })
+    .catch(function(err){ window.toast('Ошибка: '+err.message,'error'); btn.disabled=false; });
+  });
+  window.API.payments.list().then(function(list){ all=list||[]; recalc(); render(); })
+  .catch(function(err){ rows.innerHTML='<tr><td colspan="7" class="t-muted">'+(err.status===401?'Требуется вход менеджера.':'Не удалось загрузить платежи.')+'</td></tr>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>
