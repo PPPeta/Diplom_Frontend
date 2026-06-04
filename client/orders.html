@@ -3,28 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Мои заказы — Кабинет клиента</title>
+<title>Мои заказы — Кабинет партнёра</title>
 <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 <body data-zone="client" data-page="orders" data-root="../">
 <main id="view">
   <div class="page-head"><div><h1 class="page-title">Мои заказы</h1><p class="page-sub">Все ваши заказы и их статусы.</p></div><a class="btn btn-primary" href="../order-new.html">+ Новый заказ</a></div>
   <div class="filters">
-    <div class="chips"><span class="chip active">Все</span><span class="chip">Новые</span><span class="chip">В работе</span><span class="chip">Завершённые</span></div>
-    <div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск по номеру…"></div>
+    <div class="chips" id="chips"><span class="chip active" data-f="">Все</span><span class="chip" data-f="active">Активные</span><span class="chip" data-f="done">Завершённые</span></div>
+    <div class="search" style="margin-left:auto"><input id="q" class="input" placeholder="Поиск по номеру…"></div>
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>№ заказа</th><th>Дата</th><th>Состав</th><th>Сумма</th><th>Менеджер</th><th>Статус</th></tr></thead>
-      <tbody>
-        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1042</td><td>12.05.2026</td><td>Полный цикл</td><td class="t-mono">34 500 ₽</td><td>И. Сафронов</td><td><span class="badge badge--amber">В работе</span></td></tr>
-        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1039</td><td>08.05.2026</td><td>Транспорт</td><td class="t-mono">6 000 ₽</td><td>И. Сафронов</td><td><span class="badge badge--blue">Новый</span></td></tr>
-        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1021</td><td>21.04.2026</td><td>Документы</td><td class="t-mono">4 000 ₽</td><td>М. Крылова</td><td><span class="badge badge--green">Завершён</span></td></tr>
-        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1008</td><td>03.04.2026</td><td>Консультация</td><td class="t-mono">0 ₽</td><td>М. Крылова</td><td><span class="badge badge--gray">Закрыт</span></td></tr>
-      </tbody>
+      <thead><tr><th>№ заказа</th><th>Дата</th><th>Позиций</th><th>Сумма</th><th>Статус</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="5" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
+  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
+  var rows=document.getElementById('rows'), q=document.getElementById('q'), chips=document.getElementById('chips'), all=[];
+  function activeF(){ var a=chips.querySelector('.chip.active'); return a?(a.getAttribute('data-f')||''):''; }
+  function render(){
+    var term=(q.value||'').toLowerCase(), f=activeF();
+    var list=all.filter(function(o){
+      var okT=!term || (o.number||'').toLowerCase().indexOf(term)>=0;
+      var okF = !f || (f==='active' ? ['new','confirmed','in_progress'].indexOf(o.status)>=0 : ['done','closed'].indexOf(o.status)>=0);
+      return okT&&okF;
+    });
+    if(!list.length){ rows.innerHTML='<tr><td colspan="5" class="t-muted">Заказов нет.</td></tr>'; return; }
+    rows.innerHTML=list.map(function(o){
+      var n=(o.items&&o.items.length)||0;
+      return '<tr class="row-link" onclick="location.href=\'order.html?id='+o.id+'\'"><td class="t-strong">'+o.number+'</td><td>'+fmtDate(o.created_at)+'</td><td>'+n+'</td><td class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</td><td>'+badge(o.status)+'</td></tr>';
+    }).join('');
+  }
+  chips.querySelectorAll('.chip').forEach(function(ch){ ch.addEventListener('click', function(){ chips.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');}); ch.classList.add('active'); render(); }); });
+  q.addEventListener('input', render);
+  window.API.orders.list().then(function(list){ all=list||[]; render(); })
+  .catch(function(err){ rows.innerHTML='<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход.':'Не удалось загрузить заказы.')+'</td></tr>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>
