@@ -9,13 +9,43 @@
 <body data-zone="executor" data-page="tasks" data-root="../">
 <main id="view">
   <div class="page-head"><div><h1 class="page-title">Мои задачи</h1><p class="page-sub">Задачи, назначенные вам.</p></div></div>
-  <div class="filters"><div class="chips"><span class="chip active">Активные</span><span class="chip">Сегодня</span><span class="chip">Выполненные</span></div></div>
-  <div class="grid" style="gap:14px">
-    <div class="card"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start"><div><span class="badge badge--red">Высокий</span> <b>Подготовить транспорт</b><br><span class="t-muted">Заказ #1042 · до 13.05, 09:00</span></div><div class="quick-actions"><button class="btn btn-sm" data-toast="Задача начата" data-toast-type="success">Начать</button><button class="btn btn-sm btn-primary" data-toast="Задача выполнена" data-toast-type="success">Выполнено</button></div></div></div>
-    <div class="card"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start"><div><span class="badge badge--amber">Средний</span> <b>Проверить комплект документов</b><br><span class="t-muted">Заказ #1040 · до 14.05</span></div><div class="quick-actions"><button class="btn btn-sm" data-toast="Задача начата" data-toast-type="success">Начать</button><button class="btn btn-sm btn-primary" data-toast="Задача выполнена" data-toast-type="success">Выполнено</button></div></div></div>
-    <div class="card"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start"><div><span class="badge badge--gray">Обычный</span> <b>Согласовать время с клиентом</b><br><span class="t-muted">Заказ #1037 · до 15.05</span></div><div class="quick-actions"><button class="btn btn-sm" data-toast="Задача начата" data-toast-type="success">Начать</button><button class="btn btn-sm btn-primary" data-toast="Задача выполнена" data-toast-type="success">Выполнено</button></div></div></div>
-  </div>
+  <div class="filters"><div class="chips" id="chips"><span class="chip active" data-f="active">Активные</span><span class="chip" data-f="today">Сегодня</span><span class="chip" data-f="done">Выполненные</span></div></div>
+  <div class="grid" id="list" style="gap:14px"><div class="card"><span class="t-muted">Загрузка…</span></div></div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var TS={ open:['Новая','blue'], in_progress:['В работе','amber'], done:['Готово','green'] };
+  var list=document.getElementById('list');
+  var chips=document.getElementById('chips');
+  var all=[];
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
+  function isToday(iso){ if(!iso) return false; var d=new Date(iso); var n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
+  function activeF(){ var a=chips.querySelector('.chip.active'); return a?a.getAttribute('data-f'):'active'; }
+  function badge(st){ var v=TS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function render(){
+    var f=activeF();
+    var rows=all.filter(function(t){ if(f==='done') return t.status==='done'; if(f==='today') return isToday(t.due_date)&&t.status!=='done'; return t.status!=='done'; });
+    if(!rows.length){ list.innerHTML='<div class="card"><span class="t-muted">Задач нет.</span></div>'; return; }
+    list.innerHTML=rows.map(function(t){
+      var actions = t.status==='done' ? '' :
+        '<div class="quick-actions">' +
+        (t.status==='open' ? '<button class="btn btn-sm" data-task="'+t.id+'" data-to="in_progress">Начать</button>' : '') +
+        '<button class="btn btn-sm btn-primary" data-task="'+t.id+'" data-to="done">Выполнено</button></div>';
+      return '<div class="card"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start"><div>'+badge(t.status)+' <b>'+t.title+'</b><br><span class="t-muted">Заказ #'+t.order_id+' · до '+fmtDate(t.due_date)+'</span></div>'+actions+'</div></div>';
+    }).join('');
+  }
+  chips.querySelectorAll('.chip').forEach(function(ch){ ch.addEventListener('click', function(){ chips.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');}); ch.classList.add('active'); render(); }); });
+  list.addEventListener('click', function(e){
+    var btn=e.target.closest('button[data-task]'); if(!btn) return;
+    var id=btn.getAttribute('data-task'), to=btn.getAttribute('data-to'); btn.disabled=true;
+    window.API.request('/tasks/'+id, { method:'PATCH', json:{ status:to } }).then(function(){ window.toast(to==='done'?'Задача выполнена':'Задача начата','success'); var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.status=to; render(); })
+    .catch(function(err){ window.toast('Ошибка: '+err.message,'error'); btn.disabled=false; });
+  });
+  window.API.request('/tasks').then(function(data){ all=data||[]; render(); })
+  .catch(function(err){ list.innerHTML='<div class="card"><span class="t-muted">'+(err.status===401?'Требуется вход исполнителя.':'Не удалось загрузить задачи.')+'</span></div>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

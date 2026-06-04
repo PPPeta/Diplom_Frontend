@@ -8,36 +8,50 @@
 </head>
 <body data-zone="staff" data-page="dashboard" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Dashboard</h1><p class="page-sub">Оперативная сводка по заказам и задачам.</p></div><a class="btn btn-primary" href="orders.html">+ Создать заказ</a></div>
+  <div class="page-head"><div><h1 class="page-title">Dashboard</h1><p class="page-sub">Оперативная сводка по заказам и задачам.</p></div><a class="btn btn-primary" href="orders.html">Реестр заказов</a></div>
   <div class="grid g-4">
-    <div class="stat"><div class="lbl"><span class="ic">🆕</span> Новые заявки</div><div class="num">5</div><div class="delta up">+2 сегодня</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">⚙️</span> В работе</div><div class="num">12</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">⏰</span> Просрочено</div><div class="num">3</div><div class="delta down">требуют внимания</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">💰</span> Ожидают оплаты</div><div class="num">86 500 ₽</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">🆕</span> Новые</div><div class="num" id="s-new">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">⚙️</span> В работе</div><div class="num" id="s-prog">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">✅</span> Выполнено</div><div class="num" id="s-done">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">💰</span> Сумма активных</div><div class="num" id="s-sum">—</div></div>
   </div>
-
   <div class="cols mt">
     <div class="card">
-      <div class="card-h"><h3>Новые заявки</h3><a class="btn btn-sm" href="orders.html">Реестр заказов</a></div>
+      <div class="card-h"><h3>Последние заказы</h3><a class="btn btn-sm" href="orders.html">Все</a></div>
       <div class="table-wrap" style="border:0">
-        <table>
-          <thead><tr><th>№</th><th>Клиент</th><th>Сумма</th><th>Статус</th></tr></thead>
-          <tbody>
-            <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1042</td><td>А. Морозова</td><td class="t-mono">34 500 ₽</td><td><span class="badge badge--blue">Новый</span></td></tr>
-            <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1041</td><td>С. Петров</td><td class="t-mono">9 000 ₽</td><td><span class="badge badge--blue">Новый</span></td></tr>
-            <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1040</td><td>К. Иванова</td><td class="t-mono">15 000 ₽</td><td><span class="badge badge--amber">Уточнение</span></td></tr>
-          </tbody>
-        </table>
+        <table><thead><tr><th>№</th><th>Клиент</th><th>Сумма</th><th>Статус</th></tr></thead><tbody id="recent"><tr><td colspan="4" class="t-muted">Загрузка…</td></tr></tbody></table>
       </div>
     </div>
     <div class="card">
-      <div class="card-h"><h3>Последние действия</h3></div>
-      <div class="list-row"><span>✅ Заказ #1037 завершён</span><span class="t-muted">10:12</span></div>
-      <div class="list-row"><span>👤 Назначен исполнитель #1035</span><span class="t-muted">09:40</span></div>
-      <div class="list-row"><span>💳 Оплата по #1031</span><span class="t-muted">вчера</span></div>
+      <div class="card-h"><h3>Открытые задачи</h3><a class="btn btn-sm" href="tasks.html">Все</a></div>
+      <div id="tasks"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div>
     </div>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
+  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function clientLabel(o){ return o.client_ref || (o.partner_id ? 'Партнёр #'+o.partner_id : '—'); }
+  window.API.orders.list().then(function(list){
+    list=list||[];
+    var cnt={new:0,in_progress:0,done:0}; var sum=0;
+    list.forEach(function(o){ if(cnt[o.status]!==undefined) cnt[o.status]++; if(['new','confirmed','in_progress'].indexOf(o.status)>=0) sum+=Number(o.total_amount)||0; });
+    document.getElementById('s-new').textContent=cnt.new;
+    document.getElementById('s-prog').textContent=cnt.in_progress;
+    document.getElementById('s-done').textContent=cnt.done;
+    document.getElementById('s-sum').textContent=window.API.fmtPrice(sum);
+    var recent=list.slice().sort(function(a,b){ return new Date(b.created_at)-new Date(a.created_at); }).slice(0,6);
+    var rc=document.getElementById('recent');
+    rc.innerHTML = recent.length ? recent.map(function(o){ return '<tr><td class="t-strong">'+o.number+'</td><td>'+clientLabel(o)+'</td><td class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</td><td>'+badge(o.status)+'</td></tr>'; }).join('') : '<tr><td colspan="4" class="t-muted">Заказов нет.</td></tr>';
+  }).catch(function(){ document.getElementById('recent').innerHTML='<tr><td colspan="4" class="t-muted">Требуется вход менеджера.</td></tr>'; });
+  window.API.request('/tasks?status_filter=open').then(function(list){
+    list=list||[]; var box=document.getElementById('tasks');
+    box.innerHTML = list.length ? list.slice(0,8).map(function(t){ return '<div class="list-row"><span>'+t.title+' · <span class="t-muted">#'+t.order_id+'</span></span><span class="t-muted">'+(t.executor_id?('исп. #'+t.executor_id):'не назначен')+'</span></div>'; }).join('') : '<div class="list-row"><span class="t-muted">Открытых задач нет.</span></div>';
+  }).catch(function(){ document.getElementById('tasks').innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить задачи.</span></div>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

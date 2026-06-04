@@ -8,25 +8,64 @@
 </head>
 <body data-zone="staff" data-page="orders" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Реестр заказов</h1><p class="page-sub">Все заказы организации.</p></div><div class="quick-actions"><button class="btn" data-toast="Экспорт (скоро)" data-toast-type="error">Экспорт</button><button class="btn btn-primary" data-toast="Форма создания заказа (скоро)" data-toast-type="error">+ Заказ</button></div></div>
+  <div class="page-head"><div><h1 class="page-title">Реестр заказов</h1><p class="page-sub">Все заказы организации.</p></div></div>
   <div class="filters">
-    <div class="search"><input class="input" placeholder="Поиск…"></div>
-    <select class="input"><option>Все статусы</option><option>Новый</option><option>В работе</option><option>Завершён</option></select>
-    <select class="input"><option>Все менеджеры</option><option>И. Сафронов</option><option>М. Крылова</option></select>
-    <input class="input" type="date">
+    <div class="search"><input id="q" class="input" placeholder="Поиск по № или клиенту…"></div>
+    <select id="status-filter" class="input">
+      <option value="">Все статусы</option>
+      <option value="new">Новый</option>
+      <option value="confirmed">Подтверждён</option>
+      <option value="in_progress">В работе</option>
+      <option value="done">Выполнен</option>
+      <option value="closed">Закрыт</option>
+      <option value="cancelled">Отменён</option>
+    </select>
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>№</th><th>Клиент</th><th>Дата</th><th>Сумма</th><th>Исполнитель</th><th>Срочность</th><th>Статус</th></tr></thead>
-      <tbody>
-        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1042</td><td>А. Морозова</td><td>12.05</td><td class="t-mono">34 500 ₽</td><td>П. Ким</td><td><span class="badge badge--red">Высокая</span></td><td><span class="badge badge--amber">В работе</span></td></tr>
-        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1041</td><td>С. Петров</td><td>11.05</td><td class="t-mono">9 000 ₽</td><td class="t-muted">—</td><td><span class="badge badge--gray">Обычная</span></td><td><span class="badge badge--blue">Новый</span></td></tr>
-        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1040</td><td>К. Иванова</td><td>11.05</td><td class="t-mono">15 000 ₽</td><td>Д. Соколов</td><td><span class="badge badge--amber">Средняя</span></td><td><span class="badge badge--amber">Уточнение</span></td></tr>
-        <tr class="row-link" onclick="location.href='order.html'"><td class="t-strong">#1037</td><td>Г. Лебедев</td><td>09.05</td><td class="t-mono">28 000 ₽</td><td>П. Ким</td><td><span class="badge badge--gray">Обычная</span></td><td><span class="badge badge--green">Завершён</span></td></tr>
-      </tbody>
+      <thead><tr><th>№</th><th>Клиент / партнёр</th><th>Дата</th><th>Сумма</th><th>Статус</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="5" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var OS = { new:{l:'Новый'}, confirmed:{l:'Подтверждён'}, in_progress:{l:'В работе'}, done:{l:'Выполнен'}, closed:{l:'Закрыт'}, cancelled:{l:'Отменён'} };
+  var rows = document.getElementById('rows');
+  var q = document.getElementById('q');
+  var sf = document.getElementById('status-filter');
+  var all = [];
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
+  function clientLabel(o){ return o.client_ref || (o.partner_id ? 'Партнёр #'+o.partner_id : '—'); }
+  function statusSelect(o){
+    return '<select class="input" data-order="'+o.id+'" data-prev="'+o.status+'" style="padding:4px 8px">' +
+      Object.keys(OS).map(function(k){ return '<option value="'+k+'"'+(k===o.status?' selected':'')+'>'+OS[k].l+'</option>'; }).join('') + '</select>';
+  }
+  function render(){
+    var term=(q.value||'').toLowerCase(); var st=sf.value;
+    var list=all.filter(function(o){
+      var okT=!term || (o.number||'').toLowerCase().indexOf(term)>=0 || clientLabel(o).toLowerCase().indexOf(term)>=0;
+      var okS=!st || o.status===st; return okT&&okS;
+    });
+    if(!list.length){ rows.innerHTML='<tr><td colspan="5" class="t-muted">Заказов нет.</td></tr>'; return; }
+    rows.innerHTML=list.map(function(o){
+      return '<tr><td class="t-strong">'+o.number+'</td><td>'+clientLabel(o)+'</td><td>'+fmtDate(o.created_at)+'</td><td class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</td><td>'+statusSelect(o)+'</td></tr>';
+    }).join('');
+  }
+  rows.addEventListener('change', function(e){
+    var sel=e.target.closest('select[data-order]'); if(!sel) return;
+    var id=sel.getAttribute('data-order'), st=sel.value, prev=sel.getAttribute('data-prev');
+    sel.disabled=true;
+    window.API.orders.setStatus(id, st).then(function(){ window.toast('Статус заказа обновлён','success'); sel.setAttribute('data-prev',st); sel.disabled=false; })
+    .catch(function(err){ window.toast(err.status===409?'Недопустимый переход статуса':('Ошибка: '+err.message),'error'); sel.value=prev; sel.disabled=false; });
+  });
+  q.addEventListener('input', render);
+  sf.addEventListener('change', render);
+  window.API.orders.list().then(function(list){ all=list||[]; render(); })
+  .catch(function(err){ rows.innerHTML='<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход менеджера.':'Не удалось загрузить заказы.')+'</td></tr>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>
