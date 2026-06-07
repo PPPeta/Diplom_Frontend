@@ -37,6 +37,7 @@
     staff: [
       { id:'dashboard', label:'Dashboard',       href:'staff/dashboard.html', ic:'📊' },
       { id:'orders',    label:'Реестр заказов',  href:'staff/orders.html',    ic:'📑' },
+      { id:'requests',  label:'Заявки с сайта',  href:'staff/requests.html',  ic:'📨' },
       { id:'clients',   label:'Клиенты',         href:'staff/clients.html',   ic:'👥' },
       { id:'tasks',     label:'Задачи',          href:'staff/tasks.html',     ic:'✅' },
       { id:'calendar',  label:'Календарь',       href:'staff/calendar.html',  ic:'📅' },
