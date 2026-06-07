@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оформить заказ — Кабинет клиента</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="client" data-page="order-create" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Оформить заказ</h1><p class="page-sub">Выберите услуги и укажите количество.</p></div></div>
+  <div class="card">
+    <div id="svcList" class="grid" style="gap:10px"><div class="t-muted">Загрузка услуг…</div></div>
+  </div>
+  <div class="card mt" style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <div>Итого: <b id="total" class="t-mono">0 ₽</b></div>
+    <button class="btn btn-primary" id="createBtn">Создать заказ</button>
+  </div>
+</main>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  var listEl=document.getElementById('svcList');
+  var totalEl=document.getElementById('total');
+  var btn=document.getElementById('createBtn');
+  var SVC=[];
+  function qval(id){ var el=document.getElementById('q-'+id); return el?(parseInt(el.value,10)||0):0; }
+  function recalc(){ var t=0; SVC.forEach(function(s){ t+=qval(s.id)*Number(s.base_price); }); totalEl.textContent=API.fmtPrice(t); }
+  function render(list){
+    SVC=list||[];
+    var esc=API.escapeHtml;
+    if(!SVC.length){ listEl.innerHTML='<div class="notice">Каталог услуг пуст. Заполните каталог (seed) или добавьте услуги в админке.</div>'; btn.disabled=true; return; }
+    listEl.innerHTML=SVC.map(function(s){
+      return '<div class="list-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div><b>'+esc(s.name)+'</b><div class="t-muted t-mono">'+esc(s.code)+' · '+API.fmtPrice(s.base_price)+'</div></div><input type="number" min="0" value="0" id="q-'+esc(s.id)+'" style="width:90px"></div>';
+    }).join('');
+    SVC.forEach(function(s){ var el=document.getElementById('q-'+s.id); if(el) el.addEventListener('input', recalc); });
+    recalc();
+  }
+  function load(){ if(!window.API||!API.isAuthed()) return; API.services.list(true).then(render).catch(function(e){ listEl.innerHTML='<div class="notice">Не удалось загрузить услуги.</div>'; window.toast((e&&e.message)||'Ошибка','error'); }); }
+  btn.addEventListener('click', function(){
+    var items=[];
+    SVC.forEach(function(s){ var q=qval(s.id); if(q>0) items.push({service_id:s.id, qty:q}); });
+    if(!items.length){ window.toast('Выберите хотя бы одну услугу','error'); return; }
+    btn.disabled=true;
+    API.orders.create({ items:items }).then(function(o){ window.toast('Заказ '+((o&&o.number)||'')+' создан','success'); setTimeout(function(){ location.href='orders.html'; }, 900); })
+      .catch(function(e){ btn.disabled=false; window.toast((e&&e.message)||'Не удалось создать заказ','error'); });
+  });
+  load();
+})();
+</script>
+</body>
+</html>
