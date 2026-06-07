@@ -24,7 +24,7 @@
     <p class="page-sub">Загрузка каталога…</p>
   </div>
 
-  <div class="cta-row mt" style="justify-content:center"><a class="btn btn-primary" href="order-new.html">Перейти к оформлению заявки</a></div>
+  <div class="cta-row mt" style="justify-content:center"><a class="btn btn-primary" href="cart.html">Перейти в корзину</a><a class="btn" href="order-new.html">Оформить заявку</a></div>
 </div>
 <script src="assets/js/api.js"></script>
 <script>
@@ -51,7 +51,7 @@
         '<div class="svc-head"><span class="svc-ico">🕯️</span><span class="svc-tag">' + esc(s.category || 'Услуга') + '</span></div>' +
         '<div class="svc-body"><h4>' + esc(s.name) + '</h4><p>Код: ' + esc(s.code) + '</p></div>' +
         '<div class="foot"><span class="price">' + window.API.fmtPrice(s.base_price) + '</span>' +
-        '<a class="btn btn-sm btn-primary" href="order-new.html?svc=' + encodeURIComponent(s.code) + '">В заявку →</a></div></article>';
+        '<button class="btn btn-sm btn-primary cart-add" data-id="' + esc(s.id) + '" data-code="' + esc(s.code) + '" data-name="' + esc(s.name) + '" data-price="' + esc(s.base_price) + '">В корзину</button></div></article>';
     }).join('');
   }
 
@@ -80,5 +80,6 @@
 })();
 </script>
 <script src="assets/js/app.js"></script>
+<script src="assets/js/cart.js"></script>
 </body>
 </html>
