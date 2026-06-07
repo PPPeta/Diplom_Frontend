@@ -77,11 +77,12 @@ document.getElementById('order-form').addEventListener('submit', function(e){
 });
 
 window.API.services.list(true).then(function(list){
+  var esc = window.API.escapeHtml;
   var box = document.getElementById('svc-list');
   if(!box) return;
   if(!list || !list.length){ box.innerHTML = '<div class="list-row"><span>Каталог пуст</span><b></b></div>'; return; }
   box.innerHTML = list.slice(0,6).map(function(s){
-    return '<div class="list-row"><span>' + s.name + '</span><b>' + window.API.fmtPrice(s.base_price) + '</b></div>';
+    return '<div class="list-row"><span>' + esc(s.name) + '</span><b>' + window.API.fmtPrice(s.base_price) + '</b></div>';
   }).join('');
 }).catch(function(){
   var box = document.getElementById('svc-list');

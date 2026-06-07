@@ -34,8 +34,9 @@
 <script src="../assets/js/api.js"></script>
 <script>
 (function(){
+  var esc = window.API.escapeHtml;
   var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
-  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+esc(v[0])+'</span>'; }
   function errText(err){ if(err&&err.status===401) return 'Требуется вход.'; if(err&&err.status===403) return 'Недостаточно прав.'; return 'Не удалось загрузить данные. Проверьте, что сервер запущен.'; }
   var name=(localStorage.getItem('vp_name')||'').trim();
   if(name) document.getElementById('hello').textContent='Здравствуйте, '+name+' 👋';
@@ -46,7 +47,7 @@
     document.getElementById('s-total').textContent=list.length;
     var box=document.getElementById('active-list');
     box.innerHTML = active.length ? active.slice(0,6).map(function(o){
-      return '<a class="list-row row-link" href="order.html?id='+o.id+'"><div><b>'+o.number+'</b><br><span class="t-muted">'+window.API.fmtPrice(o.total_amount)+'</span></div><div>'+badge(o.status)+'</div></a>';
+      return '<a class="list-row row-link" href="order.html?id='+encodeURIComponent(o.id)+'"><div><b>'+esc(o.number)+'</b><br><span class="t-muted">'+window.API.fmtPrice(o.total_amount)+'</span></div><div>'+badge(o.status)+'</div></a>';
     }).join('') : '<div class="list-row"><span class="t-muted">Активных заказов нет.</span></div>';
   }).catch(function(err){ document.getElementById('active-list').innerHTML='<div class="list-row"><span class="t-muted">'+errText(err)+'</span></div>'; });
   window.API.payments.list().then(function(list){

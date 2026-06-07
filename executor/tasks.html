@@ -15,14 +15,15 @@
 <script src="../assets/js/api.js"></script>
 <script>
 (function(){
+  var esc = window.API.escapeHtml;
   var TS={ open:['Новая','blue'], in_progress:['В работе','amber'], done:['Готово','green'] };
   var list=document.getElementById('list');
   var chips=document.getElementById('chips');
   var all=[];
-  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return esc(iso); return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
   function isToday(iso){ if(!iso) return false; var d=new Date(iso); var n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
   function activeF(){ var a=chips.querySelector('.chip.active'); return a?a.getAttribute('data-f'):'active'; }
-  function badge(st){ var v=TS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function badge(st){ var v=TS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+esc(v[0])+'</span>'; }
   function render(){
     var f=activeF();
     var rows=all.filter(function(t){ if(f==='done') return t.status==='done'; if(f==='today') return isToday(t.due_date)&&t.status!=='done'; return t.status!=='done'; });
@@ -32,7 +33,7 @@
         '<div class="quick-actions">' +
         (t.status==='open' ? '<button class="btn btn-sm" data-task="'+t.id+'" data-to="in_progress">Начать</button>' : '') +
         '<button class="btn btn-sm btn-primary" data-task="'+t.id+'" data-to="done">Выполнено</button></div>';
-      return '<div class="card"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start"><div>'+badge(t.status)+' <b>'+t.title+'</b><br><span class="t-muted">Заказ #'+t.order_id+' · до '+fmtDate(t.due_date)+'</span></div>'+actions+'</div></div>';
+      return '<div class="card"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start"><div>'+badge(t.status)+' <b>'+esc(t.title)+'</b><br><span class="t-muted">Заказ #'+t.order_id+' · до '+fmtDate(t.due_date)+'</span></div>'+actions+'</div></div>';
     }).join('');
   }
   chips.querySelectorAll('.chip').forEach(function(ch){ ch.addEventListener('click', function(){ chips.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');}); ch.classList.add('active'); render(); }); });
