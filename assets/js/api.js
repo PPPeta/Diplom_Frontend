@@ -56,6 +56,20 @@
     } catch (e) { return null; }
   }
 
+  /* ---------- root / redirect helpers ---------- */
+  function currentRoot() {
+    var b = document.body;
+    return (b && b.dataset && b.dataset.root) ? b.dataset.root : "";
+  }
+  function onLoginPage() {
+    return /login\.html$/.test(location.pathname);
+  }
+  function redirectToLogin() {
+    // Не зацикливаемся, если уже на странице входа.
+    if (onLoginPage()) return;
+    location.replace(currentRoot() + "login.html");
+  }
+
   /* ---------- role -> home page ---------- */
   var ZONE_HOME = {
     admin: "admin/users.html",
@@ -92,6 +106,11 @@
           var detail = data && data.detail ? data.detail : "Ошибка " + res.status;
           if (Array.isArray(detail))
             detail = detail.map(function (d) { return d.msg || JSON.stringify(d); }).join("; ");
+          // Сессия истекла / токен невалиден — выходим на страницу входа.
+          if (res.status === 401 && !opts.noAuth) {
+            clearSession();
+            redirectToLogin();
+          }
           var err = new Error(typeof detail === "string" ? detail : "Ошибка " + res.status);
           err.status = res.status; err.data = data;
           throw err;
@@ -167,6 +186,12 @@
     return n.toLocaleString("ru-RU") + " ₽";
   }
 
+  function requireAuth() {
+    // Явная проверка для страниц, которые хотят гарантировать вход.
+    if (!isAuthed()) { redirectToLogin(); return false; }
+    return true;
+  }
+
   window.API = {
     base: API_BASE,
     request: request,
@@ -175,6 +200,7 @@
     me: me,
     logout: logout,
     isAuthed: isAuthed,
+    requireAuth: requireAuth,
     role: role,
     partnerId: partnerId,
     homeForRole: homeForRole,
@@ -186,4 +212,20 @@
     payments: payments,
     fmtPrice: fmtPrice
   };
+
+  /* ---------- guard: приватные зоны требуют входа ----------
+     Если страница принадлежит кабинету (client/staff/executor/admin),
+     а токена нет — сразу отправляем на вход, чтобы не показывать
+     пустые дашборды с ошибками 401. */
+  (function guardPrivateZones() {
+    try {
+      var b = document.body;
+      if (!b || !b.dataset) return;
+      var zone = b.dataset.zone || "public";
+      var PRIVATE = ["client", "staff", "executor", "admin"];
+      if (PRIVATE.indexOf(zone) >= 0 && !isAuthed()) {
+        redirectToLogin();
+      }
+    } catch (e) {}
+  })();
 })();
