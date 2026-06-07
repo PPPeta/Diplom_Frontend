@@ -8,7 +8,29 @@
 </head>
 <body data-zone="admin" data-page="users" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Пользователи</h1><p class="page-sub">Управление учётными записями и ролями.</p></div></div>
+  <div class="page-head"><div><h1 class="page-title">Пользователи</h1><p class="page-sub">Управление учётными записями и ролями.</p></div><button id="newBtn" class="btn btn-primary">+ Новый пользователь</button></div>
+
+  <div id="createCard" class="card" style="display:none;margin-bottom:16px">
+    <div class="card-h">Новый пользователь</div>
+    <form id="createForm" class="form">
+      <div class="form-row">
+        <div class="field"><label>ФИО</label><input id="f_name" class="input" required></div>
+        <div class="field"><label>Email</label><input id="f_email" type="email" class="input" required></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Пароль</label><input id="f_pass" type="text" class="input" minlength="8" required placeholder="минимум 8 символов"></div>
+        <div class="field"><label>Роль</label><select id="f_role" class="input" required></select></div>
+      </div>
+      <div class="form-row" id="partnerRow" style="display:none">
+        <div class="field"><label>Организация-партнёр</label><select id="f_partner" class="input"><option value="">— без привязки —</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="submit" class="btn btn-primary">Создать</button>
+        <button type="button" id="cancelBtn" class="btn">Отмена</button>
+      </div>
+    </form>
+  </div>
+
   <div class="filters"><div class="search"><input id="q" class="input" placeholder="Поиск по имени или email…"></div>
     <select id="rf" class="input"><option value="">Все роли</option><option value="partner">Клиент</option><option value="manager">Менеджер</option><option value="executor">Исполнитель</option><option value="admin">Администратор</option></select>
   </div>
@@ -23,32 +45,59 @@
 <script>
 (function(){
   var esc=window.API.escapeHtml;
-  var ROLES=[['partner','Клиент'],['manager','Менеджер'],['executor','Исполнитель'],['admin','Администратор']];
-  var rows=document.getElementById('rows'); var q=document.getElementById('q'); var rf=document.getElementById('rf'); var all=[];
-  function roleSelect(u){ return '<select class="input" data-role-for="'+u.id+'" data-prev="'+esc(u.role)+'" style="padding:4px 8px">'+ROLES.map(function(r){ return '<option value="'+r[0]+'"'+(r[0]===u.role?' selected':'')+'>'+r[1]+'</option>'; }).join('')+'</select>'; }
+  var ROLES=[{code:'partner',name:'Клиент'},{code:'manager',name:'Менеджер'},{code:'executor',name:'Исполнитель'},{code:'admin',name:'Администратор'}];
+  var rows=document.getElementById('rows'), q=document.getElementById('q'), rf=document.getElementById('rf'), all=[];
+  var newBtn=document.getElementById('newBtn'), createCard=document.getElementById('createCard'), createForm=document.getElementById('createForm'), cancelBtn=document.getElementById('cancelBtn');
+  var f_name=document.getElementById('f_name'), f_email=document.getElementById('f_email'), f_pass=document.getElementById('f_pass'), f_role=document.getElementById('f_role'), f_partner=document.getElementById('f_partner'), partnerRow=document.getElementById('partnerRow');
+
+  function roleSelect(u){
+    return '<select class="input" data-role-for="'+u.id+'" data-prev="'+esc(u.role)+'" style="padding:4px 8px">'+
+      ROLES.map(function(r){ return '<option value="'+esc(r.code)+'"'+(r.code===u.role?' selected':'')+'>'+esc(r.name)+'</option>'; }).join('')+'</select>';
+  }
   function stBadge(a){ return a?'<span class="badge badge--green">Активен</span>':'<span class="badge badge--gray">Заблокирован</span>'; }
   function render(){
-    var term=(q.value||'').toLowerCase(); var rfv=rf.value;
+    var term=(q.value||'').toLowerCase(), rfv=rf.value;
     var list=all.filter(function(u){ var okT=!term||(u.full_name||'').toLowerCase().indexOf(term)>=0||(u.email||'').toLowerCase().indexOf(term)>=0; var okR=!rfv||u.role===rfv; return okT&&okR; });
     if(!list.length){ rows.innerHTML='<tr><td colspan="5" class="t-muted">Пользователей нет.</td></tr>'; return; }
     rows.innerHTML=list.map(function(u){
-      var blockBtn = u.is_active ? '<button class="btn btn-sm btn-danger" data-block="'+u.id+'" data-to="0">Блок</button>' : '<button class="btn btn-sm" data-block="'+u.id+'" data-to="1">Разблок</button>';
+      var blockBtn=u.is_active?'<button class="btn btn-sm btn-danger" data-block="'+u.id+'" data-to="0">Блок</button>':'<button class="btn btn-sm" data-block="'+u.id+'" data-to="1">Разблок</button>';
       return '<tr><td class="t-strong">'+esc(u.full_name||'—')+'</td><td class="t-muted">'+esc(u.email)+'</td><td>'+roleSelect(u)+'</td><td>'+stBadge(u.is_active)+'</td><td>'+blockBtn+'</td></tr>';
     }).join('');
   }
+
+  function fillRoleSelect(){ f_role.innerHTML=ROLES.map(function(r){ return '<option value="'+esc(r.code)+'">'+esc(r.name)+'</option>'; }).join(''); togglePartner(); }
+  function togglePartner(){ partnerRow.style.display = (f_role.value==='partner') ? '' : 'none'; }
+  newBtn.addEventListener('click', function(){ createCard.style.display = createCard.style.display==='none'?'':'none'; });
+  cancelBtn.addEventListener('click', function(){ createForm.reset(); togglePartner(); createCard.style.display='none'; });
+  f_role.addEventListener('change', togglePartner);
+  createForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var payload={ full_name:f_name.value.trim(), email:f_email.value.trim(), password:f_pass.value, role_code:f_role.value };
+    if(f_role.value==='partner' && f_partner.value) payload.partner_id=Number(f_partner.value);
+    var btn=createForm.querySelector('button[type=submit]'); btn.disabled=true;
+    window.API.request('/users',{ method:'POST', json:payload }).then(function(u){
+      window.toast('Пользователь создан','success');
+      createForm.reset(); togglePartner(); createCard.style.display='none'; btn.disabled=false;
+      if(u){ all.unshift(u); render(); }
+    }).catch(function(err){ btn.disabled=false; window.toast((err&&err.message)||'Не удалось создать пользователя','error'); });
+  });
+
   q.addEventListener('input', render); rf.addEventListener('change', render);
   rows.addEventListener('change', function(e){
     var sel=e.target.closest('select[data-role-for]'); if(!sel) return;
     var id=sel.getAttribute('data-role-for'), role=sel.value, prev=sel.getAttribute('data-prev'); sel.disabled=true;
-    window.API.request('/users/'+id, { method:'PATCH', json:{ role_code:role } }).then(function(){ window.toast('Роль обновлена','success'); sel.setAttribute('data-prev',role); sel.disabled=false; var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.role=role; })
+    window.API.request('/users/'+id,{ method:'PATCH', json:{ role_code:role } }).then(function(){ window.toast('Роль обновлена','success'); sel.setAttribute('data-prev',role); sel.disabled=false; var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.role=role; })
     .catch(function(err){ window.toast(err.status===403?'Только администратор':((err&&err.message)||'Ошибка'),'error'); sel.value=prev; sel.disabled=false; });
   });
   rows.addEventListener('click', function(e){
     var btn=e.target.closest('button[data-block]'); if(!btn) return;
     var id=btn.getAttribute('data-block'), to=btn.getAttribute('data-to')==='1'; btn.disabled=true;
-    window.API.request('/users/'+id, { method:'PATCH', json:{ is_active:to } }).then(function(){ window.toast(to?'Разблокирован':'Заблокирован','success'); var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.is_active=to; render(); })
+    window.API.request('/users/'+id,{ method:'PATCH', json:{ is_active:to } }).then(function(){ window.toast(to?'Разблокирован':'Заблокирован','success'); var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.is_active=to; render(); })
     .catch(function(err){ btn.disabled=false; window.toast(err.status===403?'Только администратор':(err.status===400?'Нельзя заблокировать себя':((err&&err.message)||'Ошибка')),'error'); });
   });
+
+  window.API.request('/roles').then(function(list){ if(list&&list.length){ ROLES=list.map(function(r){ return {code:r.code,name:r.name}; }); } fillRoleSelect(); }).catch(function(){ fillRoleSelect(); });
+  window.API.request('/partners').then(function(list){ (list||[]).forEach(function(p){ var o=document.createElement('option'); o.value=p.id; o.textContent=p.org_name; f_partner.appendChild(o); }); }).catch(function(){});
   window.API.request('/users').then(function(list){ all=list||[]; render(); })
   .catch(function(err){ rows.innerHTML='<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход администратора.':(err.status===403?'Доступ только для администратора.':'Не удалось загрузить пользователей.'))+'</td></tr>'; });
 })();

@@ -65,7 +65,6 @@
     return /login\.html$/.test(location.pathname);
   }
   function redirectToLogin() {
-    // Не зацикливаемся, если уже на странице входа.
     if (onLoginPage()) return;
     location.replace(currentRoot() + "login.html");
   }
@@ -88,7 +87,6 @@
 
     var body = opts.body;
     if (opts.formData !== undefined) {
-      // multipart/form-data: не выставляем Content-Type — браузер сам добавит boundary.
       body = opts.formData;
     } else if (opts.json !== undefined) {
       headers["Content-Type"] = "application/json";
@@ -109,7 +107,6 @@
           var detail = data && data.detail ? data.detail : "Ошибка " + res.status;
           if (Array.isArray(detail))
             detail = detail.map(function (d) { return d.msg || JSON.stringify(d); }).join("; ");
-          // Сессия истекла / токен невалиден — выходим на страницу входа.
           if (res.status === 401 && !opts.noAuth) {
             clearSession();
             redirectToLogin();
@@ -123,7 +120,6 @@
     });
   }
 
-  /* Скачивание бинарного файла с авторизацией (возвращает blob + имя файла). */
   function requestBlob(path) {
     var tok = getAccess();
     var headers = {};
@@ -228,6 +224,23 @@
       });
     }
   };
+  var users = {
+    list: function (q) {
+      var qs = "";
+      if (q && q.role) qs = "?role=" + encodeURIComponent(q.role);
+      return request("/users" + qs);
+    },
+    get: function (id) { return request("/users/" + id); },
+    create: function (payload) { return request("/users", { method: "POST", json: payload }); },
+    update: function (id, payload) { return request("/users/" + id, { method: "PATCH", json: payload }); }
+  };
+  var roles = {
+    list: function () { return request("/roles"); }
+  };
+  var partners = {
+    list: function () { return request("/partners"); },
+    get: function (id) { return request("/partners/" + id); }
+  };
 
   /* ---------- helpers ---------- */
   function fmtPrice(v) {
@@ -236,8 +249,6 @@
     return n.toLocaleString("ru-RU") + " ₽";
   }
 
-  /* Анти-XSS: экранируем любые серверные/пользовательские строки
-     перед вставкой в innerHTML или в значения HTML-атрибутов. */
   function escapeHtml(v) {
     if (v === null || v === undefined) return "";
     return String(v).replace(/[&<>"']/g, function (c) {
@@ -252,7 +263,6 @@
   }
 
   function requireAuth() {
-    // Явная проверка для страниц, которые хотят гарантировать вход.
     if (!isAuthed()) { redirectToLogin(); return false; }
     return true;
   }
@@ -279,14 +289,14 @@
     orders: orders,
     payments: payments,
     documents: documents,
+    users: users,
+    roles: roles,
+    partners: partners,
     fmtPrice: fmtPrice,
     escapeHtml: escapeHtml
   };
 
-  /* ---------- guard: приватные зоны требуют входа ----------
-     Если страница принадлежит кабинету (client/staff/executor/admin),
-     а токена нет — сразу отправляем на вход, чтобы не показывать
-     пустые дашборды с ошибками 401. */
+  /* ---------- guard: приватные зоны требуют входа ---------- */
   (function guardPrivateZones() {
     try {
       var b = document.body;
