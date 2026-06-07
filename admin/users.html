@@ -8,7 +8,7 @@
 </head>
 <body data-zone="admin" data-page="users" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Пользователи</h1><p class="page-sub">Управление учётными записями и ролями.</p></div><button id="newBtn" class="btn btn-primary">+ Новый пользователь</button></div>
+  <div class="page-head"><div><h1 class="page-title">Пользователи</h1><p class="page-sub">Управление учётными записями и ролями.</p></div><div style="display:flex;gap:8px"><button id="reloadBtn" class="btn">↻ Обновить</button><button id="newBtn" class="btn btn-primary">+ Новый пользователь</button></div></div>
 
   <div id="createCard" class="card" style="display:none;margin-bottom:16px">
     <div class="card-h">Новый пользователь</div>
@@ -47,7 +47,7 @@
   var esc=window.API.escapeHtml;
   var ROLES=[{code:'partner',name:'Клиент'},{code:'manager',name:'Менеджер'},{code:'executor',name:'Исполнитель'},{code:'admin',name:'Администратор'}];
   var rows=document.getElementById('rows'), q=document.getElementById('q'), rf=document.getElementById('rf'), all=[];
-  var newBtn=document.getElementById('newBtn'), createCard=document.getElementById('createCard'), createForm=document.getElementById('createForm'), cancelBtn=document.getElementById('cancelBtn');
+  var newBtn=document.getElementById('newBtn'), reloadBtn=document.getElementById('reloadBtn'), createCard=document.getElementById('createCard'), createForm=document.getElementById('createForm'), cancelBtn=document.getElementById('cancelBtn');
   var f_name=document.getElementById('f_name'), f_email=document.getElementById('f_email'), f_pass=document.getElementById('f_pass'), f_role=document.getElementById('f_role'), f_partner=document.getElementById('f_partner'), partnerRow=document.getElementById('partnerRow');
 
   function roleSelect(u){
@@ -65,9 +65,16 @@
     }).join('');
   }
 
+  function loadUsers(){
+    rows.innerHTML='<tr><td colspan="5" class="t-muted">Загрузка…</td></tr>';
+    return window.API.request('/users').then(function(list){ all=list||[]; render(); })
+      .catch(function(err){ rows.innerHTML='<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход администратора.':(err.status===403?'Доступ только для администратора.':'Не удалось загрузить пользователей.'))+'</td></tr>'; });
+  }
+
   function fillRoleSelect(){ f_role.innerHTML=ROLES.map(function(r){ return '<option value="'+esc(r.code)+'">'+esc(r.name)+'</option>'; }).join(''); togglePartner(); }
   function togglePartner(){ partnerRow.style.display = (f_role.value==='partner') ? '' : 'none'; }
   newBtn.addEventListener('click', function(){ createCard.style.display = createCard.style.display==='none'?'':'none'; });
+  reloadBtn.addEventListener('click', function(){ loadUsers(); });
   cancelBtn.addEventListener('click', function(){ createForm.reset(); togglePartner(); createCard.style.display='none'; });
   f_role.addEventListener('change', togglePartner);
   createForm.addEventListener('submit', function(e){
@@ -78,7 +85,7 @@
     window.API.request('/users',{ method:'POST', json:payload }).then(function(u){
       window.toast('Пользователь создан','success');
       createForm.reset(); togglePartner(); createCard.style.display='none'; btn.disabled=false;
-      if(u){ all.unshift(u); render(); }
+      loadUsers();
     }).catch(function(err){ btn.disabled=false; window.toast((err&&err.message)||'Не удалось создать пользователя','error'); });
   });
 
@@ -98,8 +105,7 @@
 
   window.API.request('/roles').then(function(list){ if(list&&list.length){ ROLES=list.map(function(r){ return {code:r.code,name:r.name}; }); } fillRoleSelect(); }).catch(function(){ fillRoleSelect(); });
   window.API.request('/partners').then(function(list){ (list||[]).forEach(function(p){ var o=document.createElement('option'); o.value=p.id; o.textContent=p.org_name; f_partner.appendChild(o); }); }).catch(function(){});
-  window.API.request('/users').then(function(list){ all=list||[]; render(); })
-  .catch(function(err){ rows.innerHTML='<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход администратора.':(err.status===403?'Доступ только для администратора.':'Не удалось загрузить пользователей.'))+'</td></tr>'; });
+  loadUsers();
 })();
 </script>
 <script src="../assets/js/app.js"></script>

@@ -32,6 +32,7 @@
     Object.keys(KEY).forEach(function (k) { localStorage.removeItem(KEY[k]); });
   }
   function getAccess() { return localStorage.getItem(KEY.access); }
+  function getRefresh() { return localStorage.getItem(KEY.refresh); }
   function isAuthed() { return !!getAccess(); }
   function role() {
     var r = localStorage.getItem(KEY.role);
@@ -78,9 +79,38 @@
   };
   function homeForRole(r) { return ZONE_HOME[r] || "index.html"; }
 
+  /* ---------- token refresh (single-flight) ----------
+     Доступ-токен живёт недолго (~30 мин). Чтобы пользователя не
+     выкидывало при обычных действиях (например, при создании заказа),
+     на 401 пробуем тихо обновить токен и повторить запрос один раз. */
+  var _refreshing = null;
+  function refreshTokens() {
+    if (_refreshing) return _refreshing;
+    var rt = getRefresh();
+    if (!rt) return Promise.reject(new Error("no refresh token"));
+    _refreshing = fetch(API_BASE + "/auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: rt })
+    }).then(function (res) {
+      if (!res.ok) throw new Error("refresh failed");
+      return res.json();
+    }).then(function (t) {
+      setTokens(t);
+      _refreshing = null;
+      return t;
+    }).catch(function (e) {
+      _refreshing = null;
+      throw e;
+    });
+    return _refreshing;
+  }
+
   /* ---------- core request wrapper ---------- */
   function request(path, opts) {
-    opts = opts || {};
+    return _send(path, opts || {}, false);
+  }
+  function _send(path, opts, isRetry) {
     var headers = {};
     var key;
     if (opts.headers) for (key in opts.headers) headers[key] = opts.headers[key];
@@ -104,6 +134,19 @@
         var data = null;
         if (text) { try { data = JSON.parse(text); } catch (e) { data = text; } }
         if (!res.ok) {
+          // Пытаемся тихо обновить токен и повторить запрос один раз.
+          if (res.status === 401 && !opts.noAuth && !isRetry &&
+              path !== "/auth/refresh" && getRefresh()) {
+            return refreshTokens().then(function () {
+              return _send(path, opts, true);
+            }, function () {
+              clearSession();
+              redirectToLogin();
+              var e2 = new Error("Сессия истекла, войдите снова");
+              e2.status = 401;
+              throw e2;
+            });
+          }
           var detail = data && data.detail ? data.detail : "Ошибка " + res.status;
           if (Array.isArray(detail))
             detail = detail.map(function (d) { return d.msg || JSON.stringify(d); }).join("; ");
