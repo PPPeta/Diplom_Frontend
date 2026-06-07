@@ -23,9 +23,10 @@
 <script src="../assets/js/api.js"></script>
 <script>
 (function(){
+  var esc = window.API.escapeHtml;
   var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
-  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
-  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
+  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+esc(v[0])+'</span>'; }
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return esc(iso); return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
   var rows=document.getElementById('rows'), q=document.getElementById('q'), chips=document.getElementById('chips'), all=[];
   function activeF(){ var a=chips.querySelector('.chip.active'); return a?(a.getAttribute('data-f')||''):''; }
   function render(){
@@ -38,7 +39,7 @@
     if(!list.length){ rows.innerHTML='<tr><td colspan="5" class="t-muted">Заказов нет.</td></tr>'; return; }
     rows.innerHTML=list.map(function(o){
       var n=(o.items&&o.items.length)||0;
-      return '<tr class="row-link" onclick="location.href=\'order.html?id='+o.id+'\'"><td class="t-strong">'+o.number+'</td><td>'+fmtDate(o.created_at)+'</td><td>'+n+'</td><td class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</td><td>'+badge(o.status)+'</td></tr>';
+      return '<tr class="row-link" onclick="location.href=\'order.html?id='+encodeURIComponent(o.id)+'\'"><td class="t-strong">'+esc(o.number)+'</td><td>'+fmtDate(o.created_at)+'</td><td>'+n+'</td><td class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</td><td>'+badge(o.status)+'</td></tr>';
     }).join('');
   }
   chips.querySelectorAll('.chip').forEach(function(ch){ ch.addEventListener('click', function(){ chips.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');}); ch.classList.add('active'); render(); }); });

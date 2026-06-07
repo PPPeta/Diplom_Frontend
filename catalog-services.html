@@ -29,6 +29,7 @@
 <script src="assets/js/api.js"></script>
 <script>
 (function(){
+  var esc = window.API.escapeHtml;
   var grid = document.getElementById('svc-grid');
   var chipsBox = document.getElementById('cat-chips');
   var search = document.getElementById('svc-search');
@@ -47,8 +48,8 @@
     if(!rows.length){ grid.innerHTML = '<p class="page-sub">Ничего не найдено.</p>'; return; }
     grid.innerHTML = rows.map(function(s){
       return '<article class="svc">' +
-        '<div class="svc-head"><span class="svc-ico">🕯️</span><span class="svc-tag">' + (s.category || 'Услуга') + '</span></div>' +
-        '<div class="svc-body"><h4>' + s.name + '</h4><p>Код: ' + s.code + '</p></div>' +
+        '<div class="svc-head"><span class="svc-ico">🕯️</span><span class="svc-tag">' + esc(s.category || 'Услуга') + '</span></div>' +
+        '<div class="svc-body"><h4>' + esc(s.name) + '</h4><p>Код: ' + esc(s.code) + '</p></div>' +
         '<div class="foot"><span class="price">' + window.API.fmtPrice(s.base_price) + '</span>' +
         '<a class="btn btn-sm btn-primary" href="order-new.html">В заявку →</a></div></article>';
     }).join('');
@@ -58,7 +59,7 @@
     var cats = [];
     all.forEach(function(s){ if(s.category && cats.indexOf(s.category) < 0) cats.push(s.category); });
     chipsBox.innerHTML = '<span class="chip active" data-cat="">Все</span>' +
-      cats.map(function(c){ return '<span class="chip" data-cat="' + c + '">' + c + '</span>'; }).join('');
+      cats.map(function(c){ return '<span class="chip" data-cat="' + esc(c) + '">' + esc(c) + '</span>'; }).join('');
     chipsBox.querySelectorAll('.chip').forEach(function(ch){
       ch.addEventListener('click', function(){
         chipsBox.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('active'); });
@@ -74,7 +75,7 @@
     search.addEventListener('input', render);
     render();
   }).catch(function(){
-    grid.innerHTML = '<p class="page-sub">Не удалось загрузить каталог. Убедитесь, что API запущен на ' + window.API.base + '.</p>';
+    grid.innerHTML = '<p class="page-sub">Не удалось загрузить каталог. Убедитесь, что API запущен на ' + esc(window.API.base) + '.</p>';
   });
 })();
 </script>
