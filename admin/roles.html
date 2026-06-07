@@ -8,7 +8,17 @@
 </head>
 <body data-zone="admin" data-page="roles" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Роли и права</h1><p class="page-sub">Матрица доступа по ролям системы.</p></div><button class="btn btn-primary" data-toast="Создание роли (скоро)" data-toast-type="error">+ Роль</button></div>
+  <div class="page-head"><div><h1 class="page-title">Роли и права</h1><p class="page-sub">Роли системы и матрица доступа.</p></div></div>
+
+  <div class="card-h">Роли системы</div>
+  <div class="table-wrap" style="margin-bottom:20px">
+    <table>
+      <thead><tr><th>Роль</th><th>Код</th><th>Пользователей</th></tr></thead>
+      <tbody id="roleRows"><tr><td colspan="3" class="t-muted">Загрузка…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card-h">Матрица доступа</div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Раздел / действие</th><th>Гость</th><th>Клиент</th><th>Менеджер</th><th>Исполнитель</th><th>Админ</th></tr></thead>
@@ -22,8 +32,23 @@
       </tbody>
     </table>
   </div>
-  <div class="notice mt">💡 Изменение прав вступает в силу немедленно для всех пользователей роли.</div>
+  <div class="notice mt">💡 Роли и права фиксированы на уровне RBAC бэкенда. Назначить роль пользователю можно в разделе «Пользователи».</div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml; var rr=document.getElementById('roleRows');
+  Promise.all([
+    window.API.request('/roles').catch(function(){ return null; }),
+    window.API.request('/users').catch(function(){ return []; })
+  ]).then(function(res){
+    var roles=res[0], users=res[1]||[]; var cnt={};
+    users.forEach(function(u){ cnt[u.role]=(cnt[u.role]||0)+1; });
+    if(!roles||!roles.length){ rr.innerHTML='<tr><td colspan="3" class="t-muted">Не удалось загрузить роли (требуется вход администратора).</td></tr>'; return; }
+    rr.innerHTML=roles.map(function(r){ return '<tr><td class="t-strong">'+esc(r.name)+'</td><td class="t-mono">'+esc(r.code)+'</td><td>'+(cnt[r.code]||0)+'</td></tr>'; }).join('');
+  });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>
