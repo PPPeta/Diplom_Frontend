@@ -9,30 +9,95 @@
 </head>
 <body data-zone="client" data-page="messages" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Сообщения</h1><p class="page-sub">Переписка с вашим менеджером по заказам.</p></div></div>
+  <div class="page-head"><div><h1 class="page-title">Сообщения</h1><p class="page-sub">Переписка с менеджером по вашим заказам.</p></div></div>
   <div class="chat-layout">
-    <div class="card flush">
-      <div class="conv active"><span class="avatar">ИС</span><div class="conv-main"><b>И. Сафронов</b><span>Договор уже в разделе «Документы»…</span></div><span class="badge badge--amber">2</span></div>
-      <div class="conv"><span class="avatar">МК</span><div class="conv-main"><b>М. Крылова</b><span>Заказ #1021 завершён</span></div></div>
-      <div class="conv"><span class="avatar">ПД</span><div class="conv-main"><b>Поддержка</b><span>Общие вопросы по сервису</span></div></div>
-    </div>
+    <div class="card flush" id="conv-list"><div class="conv"><div class="conv-main"><span class="t-muted">Загрузка…</span></div></div></div>
     <div class="card">
-      <div class="card-h"><h3>И. Сафронов · Заказ #1042</h3><span class="badge badge--green">Онлайн</span></div>
+      <div class="card-h"><h3 id="thread-title">Выберите заказ</h3><span id="thread-status"></span></div>
       <div class="chat">
-        <div class="chat-body">
-          <div class="bubble in">Добрый день! Подтвердили детали по вашему заказу, выполнение начато.<span class="b-time">10:24</span></div>
-          <div class="bubble out">Спасибо! Когда будет готов договор?<span class="b-time">10:40</span></div>
-          <div class="bubble in">Договор уже в разделе «Документы», можно подписать.<span class="b-time">10:42</span></div>
-          <div class="bubble out">Отлично, подпишу сегодня.<span class="b-time">10:45</span></div>
-        </div>
-        <form class="chat-form" onsubmit="event.preventDefault(); window.toast('Сообщение отправлено','success'); this.reset();">
-          <input class="input" placeholder="Напишите сообщение…" required>
+        <div class="chat-body" id="chat-body"><div class="t-muted" style="padding:16px">Слева выберите заказ, чтобы открыть переписку.</div></div>
+        <form class="chat-form" id="chat-form" style="display:none">
+          <input class="input" id="chat-input" placeholder="Напишите сообщение…" autocomplete="off" required>
           <button class="btn btn-primary" type="submit">Отправить</button>
         </form>
       </div>
     </div>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
+  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function statusLabel(st){ return (OS[st]||[st])[0]; }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function timeOf(iso){ var d=new Date(iso); if(isNaN(d)) return ''; return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  function myId(){ try{ var d=window.API.decodeJwt(localStorage.getItem('vp_access')); return d?String(d.sub):null; }catch(e){ return null; } }
+  var mine=myId();
+  var current=null;
+  var orders=[];
+
+  function renderConvs(){
+    var box=document.getElementById('conv-list');
+    if(!orders.length){ box.innerHTML='<div class="conv"><div class="conv-main"><b>Нет заказов</b><span>Переписка ведётся по заказам.</span></div></div>'; return; }
+    box.innerHTML=orders.map(function(o){
+      return '<div class="conv" data-id="'+o.id+'"><span class="avatar">№</span><div class="conv-main"><b>'+esc(o.number)+'</b><span>'+esc(statusLabel(o.status))+'</span></div></div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('.conv'), function(el){
+      el.addEventListener('click', function(){ selectOrder(el.getAttribute('data-id')); });
+    });
+  }
+
+  function selectOrder(id){
+    current=id;
+    var o=orders.filter(function(x){ return String(x.id)===String(id); })[0];
+    Array.prototype.forEach.call(document.querySelectorAll('#conv-list .conv'), function(el){ el.classList.toggle('active', el.getAttribute('data-id')===String(id)); });
+    document.getElementById('thread-title').textContent = o?('Заказ '+o.number):'Заказ';
+    document.getElementById('thread-status').innerHTML = o?badge(o.status):'';
+    document.getElementById('chat-form').style.display='';
+    loadThread(id);
+  }
+
+  function loadThread(id){
+    var body=document.getElementById('chat-body');
+    body.innerHTML='<div class="t-muted" style="padding:16px">Загрузка…</div>';
+    window.API.request('/orders/'+id+'/messages').then(function(msgs){
+      if(current!==id) return;
+      msgs=msgs||[];
+      body.innerHTML = msgs.length ? msgs.map(function(m){
+        var out = mine && String(m.author_id)===mine;
+        return '<div class="bubble '+(out?'out':'in')+'">'+(out?'':'<b class="b-author">'+esc(m.author_name||'Сотрудник')+'</b> ')+esc(m.body)+'<span class="b-time">'+timeOf(m.created_at)+'</span></div>';
+      }).join('') : '<div class="t-muted" style="padding:16px">Пока нет сообщений. Напишите первым.</div>';
+      body.scrollTop=body.scrollHeight;
+    }).catch(function(err){
+      if(current!==id) return;
+      body.innerHTML='<div class="t-muted" style="padding:16px">'+(err.status===403?'Нет доступа к этому заказу.':'Не удалось загрузить переписку.')+'</div>';
+    });
+  }
+
+  document.getElementById('chat-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!current) return;
+    var input=document.getElementById('chat-input'); var text=input.value.trim();
+    if(!text) return;
+    var btn=this.querySelector('button'); btn.disabled=true;
+    window.API.request('/orders/'+current+'/messages', { method:'POST', json:{ body:text } }).then(function(){
+      input.value=''; btn.disabled=false; loadThread(current);
+    }).catch(function(err){
+      btn.disabled=false;
+      if(window.toast) window.toast(err.status===403?'Нет доступа к этому заказу':'Не удалось отправить сообщение','error');
+    });
+  });
+
+  window.API.orders.list().then(function(list){
+    orders=list||[];
+    renderConvs();
+    if(orders.length) selectOrder(String(orders[0].id));
+  }).catch(function(err){
+    document.getElementById('conv-list').innerHTML='<div class="conv"><div class="conv-main"><b>Ошибка</b><span>'+(err.status===401?'Требуется вход.':'Сервер недоступен.')+'</span></div></div>';
+  });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

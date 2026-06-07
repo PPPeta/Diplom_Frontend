@@ -26,6 +26,16 @@
       </div>
     </div>
   </div>
+  <div class="card mt">
+    <div class="card-h"><h3>Обсуждение заказа</h3></div>
+    <div class="chat">
+      <div class="chat-body" id="msg-body"><div class="t-muted" style="padding:12px">Загрузка…</div></div>
+      <form class="chat-form" id="msg-form">
+        <input class="input" id="msg-input" placeholder="Напишите сообщение менеджеру…" autocomplete="off" required>
+        <button class="btn btn-primary" type="submit">Отправить</button>
+      </form>
+    </div>
+  </div>
 </main>
 <script src="../assets/js/api.js"></script>
 <script>
@@ -35,6 +45,10 @@
   var PB={ pending:['Ожидает','amber'], paid:['Оплачен','green'] };
   function pbadge(st){ var v=PB[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
   function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function timeOf(iso){ var d=new Date(iso); if(isNaN(d)) return ''; return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  function myId(){ try{ var d=window.API.decodeJwt(localStorage.getItem('vp_access')); return d?String(d.sub):null; }catch(e){ return null; } }
+  var mineId=myId();
   var id=new URLSearchParams(location.search).get('id');
   if(!id){ document.getElementById('sub').textContent='Заказ не указан.'; return; }
   var svcMap={};
@@ -61,6 +75,26 @@
       return '<div class="list-row"><span>'+window.API.fmtPrice(p.amount)+'</span>'+pbadge(p.status)+'</div>';
     }).join('') : '<div class="list-row"><span class="t-muted">Платежей пока нет.</span></div>';
   }).catch(function(){ document.getElementById('pays').innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить оплаты.</span></div>'; });
+
+  // --- Обсуждение заказа (сообщения) ---
+  function loadMessages(){
+    var body=document.getElementById('msg-body');
+    window.API.request('/orders/'+id+'/messages').then(function(msgs){
+      msgs=msgs||[];
+      body.innerHTML = msgs.length ? msgs.map(function(m){
+        var out = mineId && String(m.author_id)===mineId;
+        return '<div class="bubble '+(out?'out':'in')+'">'+(out?'':'<b class="b-author">'+esc(m.author_name||'Сотрудник')+'</b> ')+esc(m.body)+'<span class="b-time">'+timeOf(m.created_at)+'</span></div>';
+      }).join('') : '<div class="t-muted" style="padding:12px">Пока нет сообщений.</div>';
+      body.scrollTop=body.scrollHeight;
+    }).catch(function(err){ body.innerHTML='<div class="t-muted" style="padding:12px">'+(err.status===403?'Нет доступа.':'Не удалось загрузить сообщения.')+'</div>'; });
+  }
+  document.getElementById('msg-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var input=document.getElementById('msg-input'); var text=input.value.trim(); if(!text) return;
+    var btn=this.querySelector('button'); btn.disabled=true;
+    window.API.request('/orders/'+id+'/messages', { method:'POST', json:{ body:text } }).then(function(){ input.value=''; btn.disabled=false; loadMessages(); }).catch(function(err){ btn.disabled=false; if(window.toast) window.toast(err.status===403?'Нет доступа':'Не удалось отправить','error'); });
+  });
+  loadMessages();
 })();
 </script>
 <script src="../assets/js/app.js"></script>
