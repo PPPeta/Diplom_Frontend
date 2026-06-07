@@ -8,31 +8,44 @@
 </head>
 <body data-zone="staff" data-page="reports" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Отчёты</h1><p class="page-sub">Аналитика по заказам и выручке.</p></div><div class="quick-actions"><select class="input"><option>За месяц</option><option>За квартал</option><option>За год</option></select><button class="btn" data-toast="Экспорт отчёта (скоро)" data-toast-type="error">Экспорт</button></div></div>
+  <div class="page-head"><div><h1 class="page-title">Отчёты</h1><p class="page-sub">Аналитика по заказам и выручке.</p></div></div>
   <div class="grid g-4">
-    <div class="stat"><div class="lbl"><span class="ic">📑</span> Заказов</div><div class="num">128</div><div class="delta up">+12%</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">💰</span> Выручка</div><div class="num">1 240 000 ₽</div><div class="delta up">+8%</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">✅</span> Завершено</div><div class="num">112</div></div>
-    <div class="stat"><div class="lbl"><span class="ic">⏱️</span> Средний срок</div><div class="num">3,4 дн</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">📑</span> Заказов</div><div class="num" id="r-orders">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">💰</span> Сумма заказов</div><div class="num" id="r-sum">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">✅</span> Завершено</div><div class="num" id="r-done">—</div></div>
+    <div class="stat"><div class="lbl"><span class="ic">🏦</span> Получено оплат</div><div class="num" id="r-paid">—</div></div>
   </div>
   <div class="cols mt">
-    <div class="card">
-      <div class="card-h"><h3>Выручка по месяцам</h3></div>
-      <div class="grid" style="gap:8px">
-        <div class="list-row"><span>Март</span><b class="t-mono">980 000 ₽</b></div>
-        <div class="list-row"><span>Апрель</span><b class="t-mono">1 150 000 ₽</b></div>
-        <div class="list-row"><span>Май</span><b class="t-mono">1 240 000 ₽</b></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-h"><h3>Популярные услуги</h3></div>
-      <div class="list-row"><span>Полный цикл</span><span class="badge badge--green">48%</span></div>
-      <div class="list-row"><span>Транспорт</span><span class="badge badge--blue">27%</span></div>
-      <div class="list-row"><span>Документы</span><span class="badge badge--amber">15%</span></div>
-      <div class="list-row"><span>Прочее</span><span class="badge badge--gray">10%</span></div>
-    </div>
+    <div class="card"><div class="card-h"><h3>Заказы по статусам</h3></div><div id="byStatus"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div></div>
+    <div class="card"><div class="card-h"><h3>Выручка по месяцам</h3></div><div id="byMonth"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div></div>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml;
+  var OS={ new:'Новый', confirmed:'Подтверждён', in_progress:'В работе', done:'Выполнен', closed:'Закрыт', cancelled:'Отменён' };
+  var MN=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+  function err(box,e){ box.innerHTML='<div class="list-row"><span class="t-muted">'+(e&&e.status===403?'Доступ только для персонала.':'Не удалось загрузить.')+'</span></div>'; }
+  window.API.orders.list().then(function(list){
+    list=list||[];
+    var sum=0,done=0,byStatus={},byMonth={};
+    list.forEach(function(o){ sum+=Number(o.total_amount)||0; if(o.status==='done'||o.status==='closed') done++; byStatus[o.status]=(byStatus[o.status]||0)+1;
+      var d=new Date(o.created_at); if(!isNaN(d)){ var k=d.getFullYear()+'-'+('0'+d.getMonth()).slice(-2); byMonth[k]=(byMonth[k]||0)+(Number(o.total_amount)||0); } });
+    document.getElementById('r-orders').textContent=list.length;
+    document.getElementById('r-sum').textContent=window.API.fmtPrice(sum);
+    document.getElementById('r-done').textContent=done;
+    var bs=document.getElementById('byStatus');
+    var keys=Object.keys(byStatus);
+    bs.innerHTML = keys.length ? keys.map(function(k){ return '<div class="list-row"><span>'+esc(OS[k]||k)+'</span><b>'+byStatus[k]+'</b></div>'; }).join('') : '<div class="list-row"><span class="t-muted">Нет данных.</span></div>';
+    var bm=document.getElementById('byMonth');
+    var mkeys=Object.keys(byMonth).sort();
+    bm.innerHTML = mkeys.length ? mkeys.map(function(k){ var p=k.split('-'); return '<div class="list-row"><span>'+MN[Number(p[1])]+' '+p[0]+'</span><b class="t-mono">'+window.API.fmtPrice(byMonth[k])+'</b></div>'; }).join('') : '<div class="list-row"><span class="t-muted">Нет данных.</span></div>';
+  }).catch(function(e){ err(document.getElementById('byStatus'),e); err(document.getElementById('byMonth'),e); });
+  window.API.payments.list().then(function(list){ list=list||[]; var paid=0; list.forEach(function(p){ if(p.status==='paid') paid+=Number(p.amount)||0; }); document.getElementById('r-paid').textContent=window.API.fmtPrice(paid); })
+  .catch(function(){ document.getElementById('r-paid').textContent='—'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

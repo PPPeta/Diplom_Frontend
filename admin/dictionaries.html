@@ -8,16 +8,65 @@
 </head>
 <body data-zone="admin" data-page="dictionaries" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Справочники</h1><p class="page-sub">Системные списки и значения.</p></div></div>
-  <div class="grid g-3">
-    <div class="card"><div class="card-h"><h3>Услуги</h3><span class="badge badge--gray">12</span></div><p class="t-muted">Каталог предоставляемых услуг.</p><button class="btn btn-sm mt-sm" data-toast="Редактирование справочника (скоро)" data-toast-type="error">Открыть</button></div>
-    <div class="card"><div class="card-h"><h3>Товары</h3><span class="badge badge--gray">28</span></div><p class="t-muted">Номенклатура товаров.</p><button class="btn btn-sm mt-sm" data-toast="Редактирование справочника (скоро)" data-toast-type="error">Открыть</button></div>
-    <div class="card"><div class="card-h"><h3>Статусы заказов</h3><span class="badge badge--gray">6</span></div><p class="t-muted">Этапы жизненного цикла заказа.</p><button class="btn btn-sm mt-sm" data-toast="Редактирование справочника (скоро)" data-toast-type="error">Открыть</button></div>
-    <div class="card"><div class="card-h"><h3>Способы оплаты</h3><span class="badge badge--gray">4</span></div><p class="t-muted">Доступные методы оплаты.</p><button class="btn btn-sm mt-sm" data-toast="Редактирование справочника (скоро)" data-toast-type="error">Открыть</button></div>
-    <div class="card"><div class="card-h"><h3>Типы документов</h3><span class="badge badge--gray">5</span></div><p class="t-muted">Договоры, счета, акты и др.</p><button class="btn btn-sm mt-sm" data-toast="Редактирование справочника (скоро)" data-toast-type="error">Открыть</button></div>
-    <div class="card"><div class="card-h"><h3>Города</h3><span class="badge badge--gray">9</span></div><p class="t-muted">Зоны обслуживания.</p><button class="btn btn-sm mt-sm" data-toast="Редактирование справочника (скоро)" data-toast-type="error">Открыть</button></div>
+  <div class="page-head"><div><h1 class="page-title">Справочники — Услуги</h1><p class="page-sub">Каталог предоставляемых услуг.</p></div></div>
+  <div class="card">
+    <div class="card-h"><h3>Добавить услугу</h3></div>
+    <form class="form mt-sm" id="addForm">
+      <div class="form-row">
+        <div class="field"><label for="a-code">Код</label><input id="a-code" placeholder="напр. burial-full" required></div>
+        <div class="field"><label for="a-name">Название</label><input id="a-name" placeholder="Название услуги" required></div>
+        <div class="field"><label for="a-cat">Категория</label><input id="a-cat" placeholder="напр. Организация"></div>
+        <div class="field"><label for="a-price">Цена, ₽</label><input id="a-price" type="number" min="0" step="0.01" value="0"></div>
+      </div>
+      <button class="btn btn-primary" type="submit" id="addBtn">Добавить услугу</button>
+    </form>
+  </div>
+  <div class="table-wrap mt">
+    <table>
+      <thead><tr><th>Код</th><th>Название</th><th>Категория</th><th>Цена</th><th>Активна</th><th></th></tr></thead>
+      <tbody id="rows"><tr><td colspan="6" class="t-muted">Загрузка…</td></tr></tbody>
+    </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml;
+  var rows=document.getElementById('rows'); var all=[];
+  function render(){
+    if(!all.length){ rows.innerHTML='<tr><td colspan="6" class="t-muted">Услуг нет. Добавьте первую через форму выше.</td></tr>'; return; }
+    rows.innerHTML=all.map(function(s){
+      var actLbl = s.is_active ? '<span class="badge badge--green">Да</span>' : '<span class="badge badge--gray">Нет</span>';
+      return '<tr><td class="t-mono">'+esc(s.code)+'</td><td class="t-strong">'+esc(s.name)+'</td><td>'+esc(s.category||'—')+'</td><td class="t-mono">'+window.API.fmtPrice(s.base_price)+'</td><td>'+actLbl+'</td><td><button class="btn btn-sm" data-toggle="'+s.id+'" data-to="'+(s.is_active?'0':'1')+'">'+(s.is_active?'Скрыть':'Включить')+'</button> <button class="btn btn-sm" data-price="'+s.id+'">Цена</button> <button class="btn btn-sm btn-danger" data-del="'+s.id+'">Удалить</button></td></tr>';
+    }).join('');
+  }
+  function load(){ window.API.services.list().then(function(list){ all=list||[]; render(); }).catch(function(err){ rows.innerHTML='<tr><td colspan="6" class="t-muted">'+(err.status===401?'Требуется вход.':'Не удалось загрузить услуги.')+'</td></tr>'; }); }
+  rows.addEventListener('click', function(e){
+    var tg=e.target.closest('button[data-toggle]');
+    if(tg){ var id=tg.getAttribute('data-toggle'); var to=tg.getAttribute('data-to')==='1'; tg.disabled=true;
+      window.API.request('/services/'+id, { method:'PATCH', json:{ is_active:to } }).then(function(){ window.toast('Сохранено','success'); var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.is_active=to; render(); })
+      .catch(function(err){ tg.disabled=false; window.toast(err.status===403?'Недостаточно прав':((err&&err.message)||'Ошибка'),'error'); }); return; }
+    var pr=e.target.closest('button[data-price]');
+    if(pr){ var id=pr.getAttribute('data-price'); var it=all.filter(function(x){return String(x.id)===String(id);})[0]; var cur=it?it.base_price:0;
+      var v=prompt('Новая цена, ₽:', cur); if(v===null) return; var num=parseFloat(v); if(isNaN(num)||num<0){ window.toast('Некорректная цена','error'); return; }
+      window.API.request('/services/'+id, { method:'PATCH', json:{ base_price:num } }).then(function(s){ window.toast('Цена обновлена','success'); if(it) it.base_price=(s&&s.base_price!=null)?s.base_price:num; render(); })
+      .catch(function(err){ window.toast(err.status===403?'Недостаточно прав':((err&&err.message)||'Ошибка'),'error'); }); return; }
+    var del=e.target.closest('button[data-del]');
+    if(del){ if(!confirm('Удалить услугу?')) return; var id=del.getAttribute('data-del'); del.disabled=true;
+      window.API.request('/services/'+id, { method:'DELETE' }).then(function(){ window.toast('Услуга удалена','success'); all=all.filter(function(x){return String(x.id)!==String(id);}); render(); })
+      .catch(function(err){ del.disabled=false; window.toast(err.status===403?'Только администратор':((err&&err.message)||'Ошибка'),'error'); }); return; }
+  });
+  document.getElementById('addForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var payload={ code:document.getElementById('a-code').value.trim(), name:document.getElementById('a-name').value.trim(), category:document.getElementById('a-cat').value.trim()||null, base_price:parseFloat(document.getElementById('a-price').value)||0, is_active:true };
+    if(!payload.code||!payload.name){ window.toast('Код и название обязательны','error'); return; }
+    var btn=document.getElementById('addBtn'); btn.disabled=true;
+    window.API.request('/services', { method:'POST', json:payload }).then(function(){ window.toast('Услуга добавлена','success'); e.target.reset(); document.getElementById('a-price').value='0'; btn.disabled=false; load(); })
+    .catch(function(err){ btn.disabled=false; window.toast(err.status===400?'Код уже существует':(err.status===403?'Недостаточно прав':((err&&err.message)||'Ошибка')),'error'); });
+  });
+  load();
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

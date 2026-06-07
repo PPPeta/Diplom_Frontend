@@ -8,20 +8,33 @@
 </head>
 <body data-zone="admin" data-page="audit" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Аудит лог</h1><p class="page-sub">Журнал действий пользователей в системе.</p></div><button class="btn" data-toast="Экспорт журнала (скоро)" data-toast-type="error">Экспорт</button></div>
-  <div class="filters"><div class="search"><input class="input" placeholder="Поиск по событию…"></div><select class="input"><option>Все пользователи</option><option>И. Сафронов</option><option>Админ</option></select><input class="input" type="date"></div>
+  <div class="page-head"><div><h1 class="page-title">Аудит лог</h1><p class="page-sub">Журнал действий пользователей в системе.</p></div></div>
+  <div class="filters"><div class="search"><input id="q" class="input" placeholder="Поиск по действию или объекту…"></div></div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Время</th><th>Пользователь</th><th>Действие</th><th>Объект</th><th>IP</th></tr></thead>
-      <tbody>
-        <tr><td class="t-mono">12.05 10:42</td><td>И. Сафронов</td><td>Изменил статус заказа</td><td>#1042</td><td class="t-muted">192.168.0.14</td></tr>
-        <tr><td class="t-mono">12.05 10:24</td><td>А. Морозова</td><td>Создала заказ</td><td>#1042</td><td class="t-muted">85.140.2.7</td></tr>
-        <tr><td class="t-mono">12.05 09:12</td><td>Админ</td><td>Заблокировал пользователя</td><td>Д. Соколов</td><td class="t-muted">192.168.0.1</td></tr>
-        <tr><td class="t-mono">11.05 18:40</td><td>М. Крылова</td><td>Выставила счёт</td><td>№ 1040-1</td><td class="t-muted">192.168.0.22</td></tr>
-      </tbody>
+      <thead><tr><th>Время</th><th>Пользователь</th><th>Роль</th><th>Действие</th><th>Объект</th><th>Детали</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="6" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml;
+  var rows=document.getElementById('rows'); var q=document.getElementById('q'); var all=[];
+  function fmt(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return esc(iso); return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  function obj(a){ if(!a.entity_type && a.entity_id==null) return '—'; return esc((a.entity_type||'')+(a.entity_id!=null?(' #'+a.entity_id):'')); }
+  function render(){
+    var term=(q.value||'').toLowerCase();
+    var list=all.filter(function(a){ return !term || (a.action||'').toLowerCase().indexOf(term)>=0 || (a.entity_type||'').toLowerCase().indexOf(term)>=0 || (a.details||'').toLowerCase().indexOf(term)>=0; });
+    if(!list.length){ rows.innerHTML='<tr><td colspan="6" class="t-muted">Записей нет.</td></tr>'; return; }
+    rows.innerHTML=list.map(function(a){ return '<tr><td class="t-mono">'+fmt(a.created_at)+'</td><td>'+(a.user_id!=null?('#'+a.user_id):'<span class="t-muted">система</span>')+'</td><td>'+esc(a.user_role||'—')+'</td><td class="t-strong">'+esc(a.action)+'</td><td>'+obj(a)+'</td><td class="t-muted">'+esc(a.details||'')+'</td></tr>'; }).join('');
+  }
+  q.addEventListener('input', render);
+  window.API.request('/audit?limit=200').then(function(list){ all=list||[]; render(); })
+  .catch(function(err){ rows.innerHTML='<tr><td colspan="6" class="t-muted">'+(err.status===401?'Требуется вход администратора.':(err.status===403?'Доступ только для администратора.':'Не удалось загрузить журнал.'))+'</td></tr>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

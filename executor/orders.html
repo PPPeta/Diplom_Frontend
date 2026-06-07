@@ -8,19 +8,38 @@
 </head>
 <body data-zone="executor" data-page="orders" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Мои заказы</h1><p class="page-sub">Заказы, в которых вы участвуете.</p></div></div>
-  <div class="filters"><div class="chips"><span class="chip active">Активные</span><span class="chip">Завершённые</span></div><div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск…"></div></div>
+  <div class="page-head"><div><h1 class="page-title">Мои заказы</h1><p class="page-sub">Заказы, в которых у вас есть задачи.</p></div></div>
+  <div class="filters"><div class="chips" id="chips"><span class="chip active" data-f="active">Активные</span><span class="chip" data-f="all">Все</span></div></div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>№</th><th>Клиент</th><th>Задача</th><th>Срок</th><th>Статус</th></tr></thead>
-      <tbody>
-        <tr><td class="t-strong">#1042</td><td>А. Морозова</td><td>Подача транспорта</td><td>13.05, 09:00</td><td><span class="badge badge--amber">В работе</span></td></tr>
-        <tr><td class="t-strong">#1040</td><td>К. Иванова</td><td>Проверка документов</td><td>14.05</td><td><span class="badge badge--blue">Новый</span></td></tr>
-        <tr><td class="t-strong">#1037</td><td>Г. Лебедев</td><td>Сопровождение</td><td>09.05</td><td><span class="badge badge--green">Завершён</span></td></tr>
-      </tbody>
+      <thead><tr><th>Заказ</th><th>Задач</th><th>Открыто</th><th>Ближайший срок</th><th>Статус</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="5" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml;
+  var rows=document.getElementById('rows'); var chips=document.getElementById('chips'); var groups=[];
+  function fmtDate(d){ if(!d) return '—'; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
+  function activeF(){ var a=chips.querySelector('.chip.active'); return a?a.getAttribute('data-f'):'active'; }
+  function build(tasks){
+    var map={};
+    (tasks||[]).forEach(function(t){ var k=t.order_id; if(!map[k]) map[k]={ order_id:k, total:0, open:0, due:null }; map[k].total++; if(t.status!=='done') map[k].open++; if(t.due_date){ var d=new Date(t.due_date); if(!isNaN(d)&&(map[k].due===null||d<map[k].due)) map[k].due=d; } });
+    groups=Object.keys(map).map(function(k){ return map[k]; });
+  }
+  function render(){
+    var f=activeF();
+    var list=groups.filter(function(g){ return f==='all'||g.open>0; });
+    if(!list.length){ rows.innerHTML='<tr><td colspan="5" class="t-muted">Заказов нет.</td></tr>'; return; }
+    rows.innerHTML=list.map(function(g){ var st=g.open>0?'<span class="badge badge--amber">В работе</span>':'<span class="badge badge--green">Завершён</span>'; return '<tr><td class="t-strong">#'+g.order_id+'</td><td>'+g.total+'</td><td>'+g.open+'</td><td>'+fmtDate(g.due)+'</td><td>'+st+'</td></tr>'; }).join('');
+  }
+  chips.querySelectorAll('.chip').forEach(function(ch){ ch.addEventListener('click', function(){ chips.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');}); ch.classList.add('active'); render(); }); });
+  window.API.request('/tasks').then(function(tasks){ build(tasks); render(); })
+  .catch(function(err){ rows.innerHTML='<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход исполнителя.':'Не удалось загрузить.')+'</td></tr>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>
