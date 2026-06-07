@@ -34,6 +34,7 @@
   var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
   function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
   function clientLabel(o){ return o.client_ref || (o.partner_id ? 'Партнёр #'+o.partner_id : '—'); }
+  function errText(err){ if(err&&err.status===401) return 'Требуется вход.'; if(err&&err.status===403) return 'Доступ только для менеджера.'; return 'Не удалось загрузить данные. Проверьте, что сервер запущен.'; }
   window.API.orders.list().then(function(list){
     list=list||[];
     var cnt={new:0,in_progress:0,done:0}; var sum=0;
@@ -45,11 +46,11 @@
     var recent=list.slice().sort(function(a,b){ return new Date(b.created_at)-new Date(a.created_at); }).slice(0,6);
     var rc=document.getElementById('recent');
     rc.innerHTML = recent.length ? recent.map(function(o){ return '<tr><td class="t-strong">'+o.number+'</td><td>'+clientLabel(o)+'</td><td class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</td><td>'+badge(o.status)+'</td></tr>'; }).join('') : '<tr><td colspan="4" class="t-muted">Заказов нет.</td></tr>';
-  }).catch(function(){ document.getElementById('recent').innerHTML='<tr><td colspan="4" class="t-muted">Требуется вход менеджера.</td></tr>'; });
+  }).catch(function(err){ document.getElementById('recent').innerHTML='<tr><td colspan="4" class="t-muted">'+errText(err)+'</td></tr>'; });
   window.API.request('/tasks?status_filter=open').then(function(list){
     list=list||[]; var box=document.getElementById('tasks');
     box.innerHTML = list.length ? list.slice(0,8).map(function(t){ return '<div class="list-row"><span>'+t.title+' · <span class="t-muted">#'+t.order_id+'</span></span><span class="t-muted">'+(t.executor_id?('исп. #'+t.executor_id):'не назначен')+'</span></div>'; }).join('') : '<div class="list-row"><span class="t-muted">Открытых задач нет.</span></div>';
-  }).catch(function(){ document.getElementById('tasks').innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить задачи.</span></div>'; });
+  }).catch(function(err){ document.getElementById('tasks').innerHTML='<div class="list-row"><span class="t-muted">'+errText(err)+'</span></div>'; });
 })();
 </script>
 <script src="../assets/js/app.js"></script>

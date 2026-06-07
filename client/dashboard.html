@@ -36,11 +36,9 @@
 (function(){
   var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
   function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
-  if(window.API && window.API.isAuthed && window.API.isAuthed()){
-    var nm=null; try{ nm=window.API.decodeJwt?null:null; }catch(e){}
-    var name=(localStorage.getItem('vp_name')||'').trim();
-    if(name) document.getElementById('hello').textContent='Здравствуйте, '+name+' 👋';
-  }
+  function errText(err){ if(err&&err.status===401) return 'Требуется вход.'; if(err&&err.status===403) return 'Недостаточно прав.'; return 'Не удалось загрузить данные. Проверьте, что сервер запущен.'; }
+  var name=(localStorage.getItem('vp_name')||'').trim();
+  if(name) document.getElementById('hello').textContent='Здравствуйте, '+name+' 👋';
   window.API.orders.list().then(function(list){
     list=list||[];
     var active=list.filter(function(o){ return ['new','confirmed','in_progress'].indexOf(o.status)>=0; });
@@ -50,7 +48,7 @@
     box.innerHTML = active.length ? active.slice(0,6).map(function(o){
       return '<a class="list-row row-link" href="order.html?id='+o.id+'"><div><b>'+o.number+'</b><br><span class="t-muted">'+window.API.fmtPrice(o.total_amount)+'</span></div><div>'+badge(o.status)+'</div></a>';
     }).join('') : '<div class="list-row"><span class="t-muted">Активных заказов нет.</span></div>';
-  }).catch(function(err){ document.getElementById('active-list').innerHTML='<div class="list-row"><span class="t-muted">'+(err.status===401?'Требуется вход.':'Не удалось загрузить заказы.')+'</span></div>'; });
+  }).catch(function(err){ document.getElementById('active-list').innerHTML='<div class="list-row"><span class="t-muted">'+errText(err)+'</span></div>'; });
   window.API.payments.list().then(function(list){
     list=list||[]; var due=0; list.forEach(function(p){ if(p.status!=='paid') due+=Number(p.amount)||0; });
     document.getElementById('s-due').textContent=window.API.fmtPrice(due);
