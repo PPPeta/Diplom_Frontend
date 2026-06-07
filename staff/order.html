@@ -3,63 +3,136 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Заказ #1042 — Менеджер</title>
+<title>Заказ — Менеджер</title>
 <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 <body data-zone="staff" data-page="orders" data-root="../">
 <main id="view">
-  <div class="breadcrumbs"><a href="orders.html">Реестр заказов</a> / Заказ #1042</div>
+  <div class="breadcrumbs"><a href="orders.html">Реестр заказов</a> / <span id="crumb">Заказ</span></div>
   <div class="page-head">
-    <div><h1 class="page-title">Заказ #1042 <span class="badge badge--amber">В работе</span></h1><p class="page-sub">Клиент: Анна Морозова · Создан 12.05.2026</p></div>
+    <div><h1 class="page-title" id="title">Заказ</h1><p class="page-sub" id="sub">Загрузка…</p></div>
   </div>
+
   <div class="card mt-sm" style="margin-bottom:18px">
     <div class="card-h"><h3>Переход по этапам</h3></div>
-    <div class="quick-actions">
-      <button class="btn" data-toast="Статус: Принят" data-toast-type="success">Принять</button>
-      <button class="btn" data-toast="Статус: Уточнение" data-toast-type="success">Уточнить</button>
-      <button class="btn" data-toast="Статус: Согласовано" data-toast-type="success">Согласовать</button>
-      <button class="btn btn-primary" data-toast="Статус: Передан в исполнение" data-toast-type="success">В исполнение</button>
-      <button class="btn" data-toast="Статус: Завершён" data-toast-type="success">Завершить</button>
-      <button class="btn btn-danger" data-toast="Требуется подтверждение закрытия" data-toast-type="error">Закрыть</button>
-    </div>
+    <div class="quick-actions" id="actions"><span class="t-muted">Загрузка…</span></div>
   </div>
 
   <div class="cols">
     <div class="grid" style="gap:18px">
       <div class="card">
         <div class="card-h"><h3>Информация о заказе</h3></div>
-        <dl class="kv"><dt>Клиент</dt><dd>Анна Морозова</dd><dt>Телефон</dt><dd>+7 900 000-00-00</dd><dt>Этап</dt><dd>Выполнение</dd><dt>Сумма</dt><dd class="t-mono">34 500 ₽</dd></dl>
+        <dl class="kv" id="info"><dt>Загрузка…</dt><dd></dd></dl>
       </div>
       <div class="card">
-        <div class="card-h"><h3>Состав и исполнители</h3></div>
-        <div class="list-row"><span>Полный цикл под ключ</span><span>П. Ким <span class="badge badge--amber">В работе</span></span></div>
-        <div class="list-row"><span>Подача транспорта</span><span>Д. Соколов <span class="badge badge--green">Готово</span></span></div>
-        <button class="btn btn-sm mt-sm" data-toast="Назначение исполнителя (скоро)" data-toast-type="error">+ Назначить исполнителя</button>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>Внутренние заметки</h3></div>
-        <textarea class="input" style="width:100%" placeholder="Заметка для команды…"></textarea>
-        <button class="btn btn-sm mt-sm" data-toast="Заметка сохранена" data-toast-type="success">Сохранить</button>
+        <div class="card-h"><h3>Состав заказа</h3></div>
+        <div id="items"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div>
       </div>
     </div>
     <div class="grid" style="gap:18px">
       <div class="card">
-        <div class="card-h"><h3>Timeline</h3></div>
-        <div class="timeline">
-          <div class="tl-item done"><div class="tl-t">Создан</div><div class="tl-d">12.05, 10:24</div></div>
-          <div class="tl-item done"><div class="tl-t">Принят</div><div class="tl-d">12.05, 11:40</div></div>
-          <div class="tl-item current"><div class="tl-t">Исполнение</div><div class="tl-d">сейчас</div></div>
-          <div class="tl-item"><div class="tl-t">Завершение</div><div class="tl-d">—</div></div>
-        </div>
+        <div class="card-h"><h3>Оплата</h3></div>
+        <div id="pays"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div>
       </div>
       <div class="card">
-        <div class="card-h"><h3>Финансы</h3></div>
-        <div class="list-row"><span>Аванс</span><span class="badge badge--green">22 500 ₽</span></div>
-        <div class="list-row"><span>Остаток</span><span class="badge badge--red">12 000 ₽</span></div>
+        <div class="card-h"><h3>Обсуждение заказа</h3></div>
+        <div class="chat">
+          <div class="chat-body" id="msg-body"><div class="t-muted" style="padding:12px">Загрузка…</div></div>
+          <form class="chat-form" id="msg-form">
+            <input class="input" id="msg-input" placeholder="Ответить клиенту…" autocomplete="off" required>
+            <button class="btn btn-primary" type="submit">Отправить</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
+  function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  var PB={ pending:['Ожидает','amber'], paid:['Оплачен','green'] };
+  function pbadge(st){ var v=PB[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  // Реальный state machine бэкенда.
+  var TRANSITIONS={ new:['confirmed','cancelled'], confirmed:['in_progress','cancelled'], in_progress:['done','cancelled'], done:['closed'], closed:[], cancelled:[] };
+  var ACT={ confirmed:['Подтвердить','btn'], in_progress:['В работу','btn btn-primary'], done:['Завершить','btn'], closed:['Закрыть','btn'], cancelled:['Отменить','btn btn-danger'] };
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function timeOf(iso){ var d=new Date(iso); if(isNaN(d)) return ''; return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  function myId(){ try{ var d=window.API.decodeJwt(localStorage.getItem('vp_access')); return d?String(d.sub):null; }catch(e){ return null; } }
+  function clientLabel(o){ return o.client_ref || (o.partner_id?('Партнёр #'+o.partner_id):'—'); }
+  var mineId=myId();
+  var id=new URLSearchParams(location.search).get('id');
+  if(!id){ document.getElementById('sub').textContent='Заказ не указан.'; document.getElementById('actions').innerHTML=''; document.getElementById('items').innerHTML=''; document.getElementById('info').innerHTML=''; document.getElementById('msg-body').innerHTML=''; return; }
+  var svcMap={};
+
+  function renderItems(o){
+    var box=document.getElementById('items');
+    var html=(o.items||[]).map(function(it){ var nm=svcMap[it.service_id]||('Услуга #'+it.service_id); return '<div class="list-row"><span>'+esc(nm)+' <span class="t-muted">×'+it.qty+'</span></span><b>'+window.API.fmtPrice(it.sum)+'</b></div>'; }).join('');
+    html += '<div class="list-row" style="font-size:17px"><b>Итого</b><b class="price">'+window.API.fmtPrice(o.total_amount)+'</b></div>';
+    box.innerHTML=html;
+  }
+
+  function renderActions(o){
+    var box=document.getElementById('actions');
+    var targets=TRANSITIONS[o.status]||[];
+    if(!targets.length){ box.innerHTML='<span class="t-muted">Заказ в финальном статусе — переходов нет.</span>'; return; }
+    box.innerHTML=targets.map(function(t){ var a=ACT[t]||[t,'btn']; return '<button class="'+a[1]+'" data-to="'+t+'">'+a[0]+'</button>'; }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('button'), function(btn){
+      btn.addEventListener('click', function(){
+        var to=btn.getAttribute('data-to');
+        Array.prototype.forEach.call(box.querySelectorAll('button'), function(b){ b.disabled=true; });
+        window.API.orders.setStatus(id, to).then(function(updated){
+          if(window.toast) window.toast('Статус обновлён','success');
+          render(updated);
+        }).catch(function(err){
+          if(window.toast) window.toast(err.status===403?'Недостаточно прав':(err.status===409?'Недопустимый переход':('Не удалось: '+err.message)),'error');
+          Array.prototype.forEach.call(box.querySelectorAll('button'), function(b){ b.disabled=false; });
+        });
+      });
+    });
+  }
+
+  function render(o){
+    document.getElementById('crumb').textContent=o.number;
+    document.getElementById('title').innerHTML=esc(o.number)+' '+badge(o.status);
+    document.getElementById('sub').textContent='Клиент: '+clientLabel(o)+' · Создан '+fmtDate(o.created_at);
+    document.getElementById('info').innerHTML='<dt>Номер</dt><dd>'+esc(o.number)+'</dd><dt>Клиент</dt><dd>'+esc(clientLabel(o))+'</dd><dt>Статус</dt><dd>'+badge(o.status)+'</dd><dt>Сумма</dt><dd class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</dd>';
+    renderItems(o);
+    renderActions(o);
+  }
+
+  window.API.services.list().then(function(s){ (s||[]).forEach(function(x){ svcMap[x.id]=x.name; }); }).catch(function(){}).then(function(){
+    return window.API.orders.get(id);
+  }).then(render).catch(function(err){
+    document.getElementById('sub').textContent=(err.status===404?'Заказ не найден.':(err.status===401?'Требуется вход.':(err.status===403?'Нет доступа.':'Ошибка загрузки.')));
+    document.getElementById('actions').innerHTML=''; document.getElementById('items').innerHTML=''; document.getElementById('info').innerHTML='';
+  });
+
+  window.API.payments.list(id).then(function(list){
+    list=list||[]; var box=document.getElementById('pays');
+    box.innerHTML = list.length ? list.map(function(p){ return '<div class="list-row"><span>'+window.API.fmtPrice(p.amount)+' <span class="t-muted">'+(p.kind==='commission'?'комиссия':'оплата')+'</span></span>'+pbadge(p.status)+'</div>'; }).join('') : '<div class="list-row"><span class="t-muted">Платежей пока нет.</span></div>';
+  }).catch(function(){ document.getElementById('pays').innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить оплаты.</span></div>'; });
+
+  // --- Обсуждение заказа ---
+  function loadMessages(){
+    var body=document.getElementById('msg-body');
+    window.API.request('/orders/'+id+'/messages').then(function(msgs){
+      msgs=msgs||[];
+      body.innerHTML = msgs.length ? msgs.map(function(m){ var out = mineId && String(m.author_id)===mineId; return '<div class="bubble '+(out?'out':'in')+'">'+(out?'':'<b class="b-author">'+esc(m.author_name||'Клиент')+'</b> ')+esc(m.body)+'<span class="b-time">'+timeOf(m.created_at)+'</span></div>'; }).join('') : '<div class="t-muted" style="padding:12px">Пока нет сообщений.</div>';
+      body.scrollTop=body.scrollHeight;
+    }).catch(function(err){ body.innerHTML='<div class="t-muted" style="padding:12px">'+(err.status===403?'Нет доступа.':'Не удалось загрузить сообщения.')+'</div>'; });
+  }
+  document.getElementById('msg-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var input=document.getElementById('msg-input'); var text=input.value.trim(); if(!text) return;
+    var btn=this.querySelector('button'); btn.disabled=true;
+    window.API.request('/orders/'+id+'/messages', { method:'POST', json:{ body:text } }).then(function(){ input.value=''; btn.disabled=false; loadMessages(); }).catch(function(err){ btn.disabled=false; if(window.toast) window.toast(err.status===403?'Нет доступа':'Не удалось отправить','error'); });
+  });
+  loadMessages();
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

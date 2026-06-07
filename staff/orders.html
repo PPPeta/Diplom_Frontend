@@ -50,7 +50,7 @@
     });
     if(!list.length){ rows.innerHTML='<tr><td colspan="5" class="t-muted">Заказов нет.</td></tr>'; return; }
     rows.innerHTML=list.map(function(o){
-      return '<tr><td class="t-strong">'+o.number+'</td><td>'+clientLabel(o)+'</td><td>'+fmtDate(o.created_at)+'</td><td class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</td><td>'+statusSelect(o)+'</td></tr>';
+      return '<tr><td class="t-strong"><a href="order.html?id='+o.id+'">'+o.number+'</a></td><td>'+clientLabel(o)+'</td><td>'+fmtDate(o.created_at)+'</td><td class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</td><td>'+statusSelect(o)+'</td></tr>';
     }).join('');
   }
   rows.addEventListener('change', function(e){
