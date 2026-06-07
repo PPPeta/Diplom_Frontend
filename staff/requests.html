@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Заявки с сайта</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="staff" data-page="requests" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Заявки с сайта</h1><p class="page-sub">Обращения от клиентов без личного кабинета (форма заказа и корзина).</p></div></div>
+  <div class="filters">
+    <div class="search"><input id="q" class="input" placeholder="Поиск по имени, телефону, тексту…"></div>
+    <select id="status-filter" class="input">
+      <option value="">Все статусы</option>
+      <option value="new">Новая</option>
+      <option value="in_progress">В работе</option>
+      <option value="done">Обработана</option>
+      <option value="cancelled">Отклонена</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Дата</th><th>Клиент</th><th>Контакты</th><th>Сообщение</th><th>Источник</th><th>Статус</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="6" class="t-muted">Загрузка…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var RS = { new:{l:'Новая'}, in_progress:{l:'В работе'}, done:{l:'Обработана'}, cancelled:{l:'Отклонена'} };
+  var rows = document.getElementById('rows');
+  var q = document.getElementById('q');
+  var sf = document.getElementById('status-filter');
+  var esc = window.API.escapeHtml;
+  var all = [];
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  function contacts(r){ var parts=[]; if(r.phone) parts.push(esc(r.phone)); if(r.email) parts.push(esc(r.email)); return parts.join('<br>') || '—'; }
+  function statusSelect(r){
+    var cur = RS[r.status] ? r.status : 'new';
+    return '<select class="input" data-req="'+r.id+'" data-prev="'+cur+'" style="padding:4px 8px">' +
+      Object.keys(RS).map(function(k){ return '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+RS[k].l+'</option>'; }).join('') + '</select>';
+  }
+  function render(){
+    var term=(q.value||'').toLowerCase(); var st=sf.value;
+    var list=all.filter(function(r){
+      var hay=((r.client_name||'')+' '+(r.phone||'')+' '+(r.email||'')+' '+(r.message||'')).toLowerCase();
+      var okT=!term || hay.indexOf(term)>=0;
+      var okS=!st || r.status===st; return okT&&okS;
+    });
+    if(!list.length){ rows.innerHTML='<tr><td colspan="6" class="t-muted">Заявок нет.</td></tr>'; return; }
+    rows.innerHTML=list.map(function(r){
+      return '<tr><td>'+fmtDate(r.created_at)+'</td><td class="t-strong">'+esc(r.client_name)+'</td><td>'+contacts(r)+'</td><td>'+(r.message?esc(r.message):'—')+'</td><td>'+esc(r.source||'site')+'</td><td>'+statusSelect(r)+'</td></tr>';
+    }).join('');
+  }
+  rows.addEventListener('change', function(e){
+    var sel=e.target.closest('select[data-req]'); if(!sel) return;
+    var id=sel.getAttribute('data-req'), st=sel.value, prev=sel.getAttribute('data-prev');
+    sel.disabled=true;
+    window.API.request('/requests/'+id, { method:'PATCH', json:{ status: st } })
+      .then(function(){ window.toast('Статус заявки обновлён','success'); sel.setAttribute('data-prev',st); sel.disabled=false; var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.status=st; })
+      .catch(function(err){ window.toast('Ошибка: '+err.message,'error'); sel.value=prev; sel.disabled=false; });
+  });
+  q.addEventListener('input', render);
+  sf.addEventListener('change', render);
+  window.API.requests.list().then(function(list){ all=list||[]; render(); })
+  .catch(function(err){ rows.innerHTML='<tr><td colspan="6" class="t-muted">'+(err.status===401?'Требуется вход менеджера.':'Не удалось загрузить заявки.')+'</td></tr>'; });
+})();
+</script>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>
