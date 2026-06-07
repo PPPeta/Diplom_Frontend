@@ -51,7 +51,7 @@
         '<div class="svc-head"><span class="svc-ico">🕯️</span><span class="svc-tag">' + esc(s.category || 'Услуга') + '</span></div>' +
         '<div class="svc-body"><h4>' + esc(s.name) + '</h4><p>Код: ' + esc(s.code) + '</p></div>' +
         '<div class="foot"><span class="price">' + window.API.fmtPrice(s.base_price) + '</span>' +
-        '<a class="btn btn-sm btn-primary" href="order-new.html">В заявку →</a></div></article>';
+        '<a class="btn btn-sm btn-primary" href="order-new.html?svc=' + encodeURIComponent(s.code) + '">В заявку →</a></div></article>';
     }).join('');
   }
 
