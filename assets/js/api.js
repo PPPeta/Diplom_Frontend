@@ -186,6 +186,21 @@
     return n.toLocaleString("ru-RU") + " ₽";
   }
 
+  /* Анти-XSS: экранируем любые серверные/пользовательские строки
+     перед вставкой в innerHTML или в значения HTML-атрибутов. */
+  function escapeHtml(v) {
+    if (v === null || v === undefined) return "";
+    return String(v).replace(/[&<>"']/g, function (c) {
+      switch (c) {
+        case "&": return "&amp;";
+        case "<": return "&lt;";
+        case ">": return "&gt;";
+        case "\"": return "&quot;";
+        default: return "&#39;";
+      }
+    });
+  }
+
   function requireAuth() {
     // Явная проверка для страниц, которые хотят гарантировать вход.
     if (!isAuthed()) { redirectToLogin(); return false; }
@@ -210,7 +225,8 @@
     requests: requests,
     orders: orders,
     payments: payments,
-    fmtPrice: fmtPrice
+    fmtPrice: fmtPrice,
+    escapeHtml: escapeHtml
   };
 
   /* ---------- guard: приватные зоны требуют входа ----------
