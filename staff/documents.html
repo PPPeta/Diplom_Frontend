@@ -8,19 +8,83 @@
 </head>
 <body data-zone="staff" data-page="documents" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Документы</h1><p class="page-sub">Договоры, счета и акты по всем заказам.</p></div><div class="quick-actions"><button class="btn" data-toast="Шаблоны документов (скоро)" data-toast-type="error">Шаблоны</button><button class="btn btn-primary" data-toast="Создание документа (скоро)" data-toast-type="error">+ Документ</button></div></div>
-  <div class="filters"><div class="chips"><span class="chip active">Все</span><span class="chip">Договоры</span><span class="chip">Счета</span><span class="chip">Акты</span></div><div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск…"></div></div>
-  <div class="table-wrap">
+  <div class="page-head"><div><h1 class="page-title">Документы</h1><p class="page-sub">Договоры, счета и акты по всем заказам.</p></div></div>
+  <div class="card">
+    <div class="card-h"><h3>Загрузить документ</h3></div>
+    <form class="form mt-sm" id="upForm">
+      <div class="form-row">
+        <div class="field"><label for="u-order">Заказ №</label><input id="u-order" type="number" min="1" placeholder="ID заказа" required></div>
+        <div class="field"><label for="u-type">Тип</label>
+          <select id="u-type" class="input">
+            <option value="contract">Договор</option>
+            <option value="invoice">Счёт</option>
+            <option value="act">Акт</option>
+            <option value="other">Прочее</option>
+          </select>
+        </div>
+        <div class="field"><label for="u-number">Номер (необязательно)</label><input id="u-number" placeholder="напр. 1042-1"></div>
+      </div>
+      <div class="field"><label for="u-file">Файл (до 10 МБ)</label><input id="u-file" type="file" required></div>
+      <button class="btn btn-primary" type="submit" id="upBtn">Загрузить</button>
+    </form>
+  </div>
+  <div class="table-wrap mt">
     <table>
-      <thead><tr><th>Документ</th><th>Заказ</th><th>Клиент</th><th>Дата</th><th>Статус</th><th></th></tr></thead>
-      <tbody>
-        <tr><td class="t-strong">📄 Договор № 1042</td><td>#1042</td><td>А. Морозова</td><td>12.05.2026</td><td><span class="badge badge--green">Подписан</span></td><td><button class="btn btn-sm" data-toast="Открыто" data-toast-type="success">Открыть</button></td></tr>
-        <tr><td class="t-strong">🧾 Счёт № 1042-1</td><td>#1042</td><td>А. Морозова</td><td>12.05.2026</td><td><span class="badge badge--amber">Ожидает оплаты</span></td><td><button class="btn btn-sm" data-toast="Открыто" data-toast-type="success">Открыть</button></td></tr>
-        <tr><td class="t-strong">📄 Договор № 1040</td><td>#1040</td><td>К. Иванова</td><td>11.05.2026</td><td><span class="badge badge--blue">На согласовании</span></td><td><button class="btn btn-sm" data-toast="Открыто" data-toast-type="success">Открыть</button></td></tr>
-      </tbody>
+      <thead><tr><th>Документ</th><th>Заказ</th><th>Тип</th><th>Размер</th><th>Дата</th><th>Статус</th><th></th></tr></thead>
+      <tbody id="rows"><tr><td colspan="7" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml;
+  var TYPE={ contract:['Договор','📄'], invoice:['Счёт','🧾'], act:['Акт','📝'], other:['Документ','📎'] };
+  var ST={ draft:['Черновик','gray'], issued:['Выпущен','green'], signed:['Подписан','green'], pending:['Ожидает','amber'] };
+  var rows=document.getElementById('rows');
+  var all=[];
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return esc(iso); return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
+  function fmtSize(b){ b=Number(b)||0; if(b<1024) return b+' Б'; if(b<1048576) return (b/1024).toFixed(1)+' КБ'; return (b/1048576).toFixed(1)+' МБ'; }
+  function tBadge(st){ var v=ST[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+esc(v[0])+'</span>'; }
+  function render(){
+    if(!all.length){ rows.innerHTML='<tr><td colspan="7" class="t-muted">Документов пока нет. Загрузите первый через форму выше.</td></tr>'; return; }
+    rows.innerHTML=all.map(function(d){
+      var t=TYPE[d.type]||[d.type||'Документ','📎'];
+      var name=d.filename||(t[0]+(d.number?(' № '+d.number):''));
+      return '<tr><td class="t-strong">'+t[1]+' '+esc(name)+'</td><td>#'+d.order_id+'</td><td>'+esc(t[0])+'</td><td class="t-mono">'+fmtSize(d.size)+'</td><td>'+fmtDate(d.created_at)+'</td><td>'+tBadge(d.status)+'</td><td><button class="btn btn-sm" data-dl="'+d.id+'">Скачать</button> <button class="btn btn-sm btn-danger" data-del="'+d.id+'">Удалить</button></td></tr>';
+    }).join('');
+  }
+  function load(){
+    window.API.documents.list().then(function(list){ all=list||[]; render(); })
+    .catch(function(err){ rows.innerHTML='<tr><td colspan="7" class="t-muted">'+(err.status===401?'Требуется вход.':'Не удалось загрузить документы.')+'</td></tr>'; });
+  }
+  rows.addEventListener('click', function(e){
+    var dl=e.target.closest('button[data-dl]');
+    if(dl){ dl.disabled=true; window.API.documents.download(dl.getAttribute('data-dl')).then(function(){ dl.disabled=false; }).catch(function(err){ dl.disabled=false; window.toast((err&&err.message)||'Не удалось скачать','error'); }); return; }
+    var del=e.target.closest('button[data-del]');
+    if(del){ if(!confirm('Удалить документ?')) return; del.disabled=true; var id=del.getAttribute('data-del');
+      window.API.documents.remove(id).then(function(){ window.toast('Документ удалён','success'); all=all.filter(function(x){return String(x.id)!==String(id);}); render(); })
+      .catch(function(err){ del.disabled=false; window.toast(err.status===403?'Недостаточно прав':((err&&err.message)||'Ошибка'),'error'); }); }
+  });
+  document.getElementById('upForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var order=document.getElementById('u-order').value;
+    var type=document.getElementById('u-type').value;
+    var number=document.getElementById('u-number').value.trim();
+    var fileEl=document.getElementById('u-file');
+    if(!fileEl.files||!fileEl.files[0]){ window.toast('Выберите файл','error'); return; }
+    var fd=new FormData();
+    fd.append('order_id', order);
+    fd.append('type', type);
+    if(number) fd.append('number', number);
+    fd.append('file', fileEl.files[0]);
+    var btn=document.getElementById('upBtn'); btn.disabled=true;
+    window.API.documents.upload(fd).then(function(){ window.toast('Документ загружен','success'); e.target.reset(); btn.disabled=false; load(); })
+    .catch(function(err){ btn.disabled=false; window.toast(err.status===413?'Файл больше 10 МБ':(err.status===404?'Заказ не найден':(err.status===403?'Недостаточно прав':((err&&err.message)||'Не удалось загрузить'))),'error'); });
+  });
+  load();
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

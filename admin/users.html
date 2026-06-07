@@ -8,21 +8,51 @@
 </head>
 <body data-zone="admin" data-page="users" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Пользователи</h1><p class="page-sub">Управление учётными записями и ролями.</p></div><button class="btn btn-primary" data-toast="Форма создания пользователя (скоро)" data-toast-type="error">+ Новый пользователь</button></div>
-  <div class="filters"><div class="search"><input class="input" placeholder="Поиск…"></div><select class="input"><option>Все роли</option><option>Менеджер</option><option>Исполнитель</option><option>Администратор</option></select></div>
+  <div class="page-head"><div><h1 class="page-title">Пользователи</h1><p class="page-sub">Управление учётными записями и ролями.</p></div></div>
+  <div class="filters"><div class="search"><input id="q" class="input" placeholder="Поиск по имени или email…"></div>
+    <select id="rf" class="input"><option value="">Все роли</option><option value="partner">Клиент</option><option value="manager">Менеджер</option><option value="executor">Исполнитель</option><option value="admin">Администратор</option></select>
+  </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Сотрудник</th><th>Email</th><th>Роль</th><th>Последний вход</th><th>Статус</th><th></th></tr></thead>
-      <tbody>
-        <tr><td class="t-strong">Игорь Сафронов</td><td class="t-muted">safronov@example.ru</td><td><span class="badge badge--blue">Менеджер</span></td><td>сегодня, 09:12</td><td><span class="badge badge--green">Активен</span></td><td><button class="btn btn-sm btn-danger" data-toast="Пользователь заблокирован" data-toast-type="success">Блок</button></td></tr>
-        <tr><td class="t-strong">Мария Крылова</td><td class="t-muted">krylova@example.ru</td><td><span class="badge badge--blue">Менеджер</span></td><td>вчера, 18:40</td><td><span class="badge badge--green">Активен</span></td><td><button class="btn btn-sm btn-danger" data-toast="Пользователь заблокирован" data-toast-type="success">Блок</button></td></tr>
-        <tr><td class="t-strong">Павел Ким</td><td class="t-muted">kim@example.ru</td><td><span class="badge badge--amber">Исполнитель</span></td><td>сегодня, 08:30</td><td><span class="badge badge--green">Активен</span></td><td><button class="btn btn-sm btn-danger" data-toast="Пользователь заблокирован" data-toast-type="success">Блок</button></td></tr>
-        <tr><td class="t-strong">Дмитрий Соколов</td><td class="t-muted">sokolov@example.ru</td><td><span class="badge badge--amber">Исполнитель</span></td><td>3 дня назад</td><td><span class="badge badge--gray">Заблокирован</span></td><td><button class="btn btn-sm" data-toast="Пользователь разблокирован" data-toast-type="success">Разблок</button></td></tr>
-        <tr><td class="t-strong">Админ</td><td class="t-muted">admin@example.ru</td><td><span class="badge badge--red">Администратор</span></td><td>сейчас в сети</td><td><span class="badge badge--green">Активен</span></td><td></td></tr>
-      </tbody>
+      <thead><tr><th>Сотрудник</th><th>Email</th><th>Роль</th><th>Статус</th><th></th></tr></thead>
+      <tbody id="rows"><tr><td colspan="5" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml;
+  var ROLES=[['partner','Клиент'],['manager','Менеджер'],['executor','Исполнитель'],['admin','Администратор']];
+  var rows=document.getElementById('rows'); var q=document.getElementById('q'); var rf=document.getElementById('rf'); var all=[];
+  function roleSelect(u){ return '<select class="input" data-role-for="'+u.id+'" data-prev="'+esc(u.role)+'" style="padding:4px 8px">'+ROLES.map(function(r){ return '<option value="'+r[0]+'"'+(r[0]===u.role?' selected':'')+'>'+r[1]+'</option>'; }).join('')+'</select>'; }
+  function stBadge(a){ return a?'<span class="badge badge--green">Активен</span>':'<span class="badge badge--gray">Заблокирован</span>'; }
+  function render(){
+    var term=(q.value||'').toLowerCase(); var rfv=rf.value;
+    var list=all.filter(function(u){ var okT=!term||(u.full_name||'').toLowerCase().indexOf(term)>=0||(u.email||'').toLowerCase().indexOf(term)>=0; var okR=!rfv||u.role===rfv; return okT&&okR; });
+    if(!list.length){ rows.innerHTML='<tr><td colspan="5" class="t-muted">Пользователей нет.</td></tr>'; return; }
+    rows.innerHTML=list.map(function(u){
+      var blockBtn = u.is_active ? '<button class="btn btn-sm btn-danger" data-block="'+u.id+'" data-to="0">Блок</button>' : '<button class="btn btn-sm" data-block="'+u.id+'" data-to="1">Разблок</button>';
+      return '<tr><td class="t-strong">'+esc(u.full_name||'—')+'</td><td class="t-muted">'+esc(u.email)+'</td><td>'+roleSelect(u)+'</td><td>'+stBadge(u.is_active)+'</td><td>'+blockBtn+'</td></tr>';
+    }).join('');
+  }
+  q.addEventListener('input', render); rf.addEventListener('change', render);
+  rows.addEventListener('change', function(e){
+    var sel=e.target.closest('select[data-role-for]'); if(!sel) return;
+    var id=sel.getAttribute('data-role-for'), role=sel.value, prev=sel.getAttribute('data-prev'); sel.disabled=true;
+    window.API.request('/users/'+id, { method:'PATCH', json:{ role_code:role } }).then(function(){ window.toast('Роль обновлена','success'); sel.setAttribute('data-prev',role); sel.disabled=false; var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.role=role; })
+    .catch(function(err){ window.toast(err.status===403?'Только администратор':((err&&err.message)||'Ошибка'),'error'); sel.value=prev; sel.disabled=false; });
+  });
+  rows.addEventListener('click', function(e){
+    var btn=e.target.closest('button[data-block]'); if(!btn) return;
+    var id=btn.getAttribute('data-block'), to=btn.getAttribute('data-to')==='1'; btn.disabled=true;
+    window.API.request('/users/'+id, { method:'PATCH', json:{ is_active:to } }).then(function(){ window.toast(to?'Разблокирован':'Заблокирован','success'); var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.is_active=to; render(); })
+    .catch(function(err){ btn.disabled=false; window.toast(err.status===403?'Только администратор':(err.status===400?'Нельзя заблокировать себя':((err&&err.message)||'Ошибка')),'error'); });
+  });
+  window.API.request('/users').then(function(list){ all=list||[]; render(); })
+  .catch(function(err){ rows.innerHTML='<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход администратора.':(err.status===403?'Доступ только для администратора.':'Не удалось загрузить пользователей.'))+'</td></tr>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>

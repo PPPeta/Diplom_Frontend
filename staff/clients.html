@@ -8,20 +8,35 @@
 </head>
 <body data-zone="staff" data-page="clients" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Клиенты</h1><p class="page-sub">База клиентов и история обращений.</p></div><button class="btn btn-primary" data-toast="Форма добавления клиента (скоро)" data-toast-type="error">+ Клиент</button></div>
-  <div class="filters"><div class="search"><input class="input" placeholder="Поиск по имени или телефону…"></div><select class="input"><option>Все клиенты</option><option>Активные</option><option>Новые</option></select></div>
+  <div class="page-head"><div><h1 class="page-title">Клиенты</h1><p class="page-sub">Организации-партнёры и контрагенты.</p></div></div>
+  <div class="filters"><div class="search"><input id="q" class="input" placeholder="Поиск по названию или ИНН…"></div></div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Клиент</th><th>Телефон</th><th>Email</th><th>Заказов</th><th>Последний</th><th>Статус</th></tr></thead>
-      <tbody>
-        <tr class="row-link" onclick="location.href='orders.html'"><td class="t-strong">Анна Морозова</td><td class="t-mono">+7 916 000-00-00</td><td class="t-muted">morozova@example.ru</td><td>4</td><td>12.05.2026</td><td><span class="badge badge--green">Активен</span></td></tr>
-        <tr class="row-link" onclick="location.href='orders.html'"><td class="t-strong">Сергей Петров</td><td class="t-mono">+7 903 111-22-33</td><td class="t-muted">petrov@example.ru</td><td>1</td><td>11.05.2026</td><td><span class="badge badge--blue">Новый</span></td></tr>
-        <tr class="row-link" onclick="location.href='orders.html'"><td class="t-strong">Ксения Иванова</td><td class="t-mono">+7 925 444-55-66</td><td class="t-muted">ivanova@example.ru</td><td>2</td><td>11.05.2026</td><td><span class="badge badge--green">Активен</span></td></tr>
-        <tr class="row-link" onclick="location.href='orders.html'"><td class="t-strong">Геннадий Лебедев</td><td class="t-mono">+7 999 777-88-99</td><td class="t-muted">lebedev@example.ru</td><td>3</td><td>09.05.2026</td><td><span class="badge badge--gray">Завершён</span></td></tr>
-      </tbody>
+      <thead><tr><th>Организация</th><th>ИНН</th><th>Тип</th><th>Договор</th><th>Создан</th><th>Статус</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="6" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml;
+  var TYPE={ insurance:'Страховая', corporate:'Корпоративный', allied:'Партнёр' };
+  var ST={ active:['Активен','green'], blocked:['Заблокирован','gray'], inactive:['Неактивен','gray'] };
+  var rows=document.getElementById('rows'); var q=document.getElementById('q'); var all=[];
+  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return esc(iso); return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
+  function sb(st){ var v=ST[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+esc(v[0])+'</span>'; }
+  function render(){
+    var term=(q.value||'').toLowerCase();
+    var list=all.filter(function(p){ return !term || (p.org_name||'').toLowerCase().indexOf(term)>=0 || (p.inn||'').toLowerCase().indexOf(term)>=0; });
+    if(!list.length){ rows.innerHTML='<tr><td colspan="6" class="t-muted">Партнёров нет.</td></tr>'; return; }
+    rows.innerHTML=list.map(function(p){ return '<tr><td class="t-strong">'+esc(p.org_name)+'</td><td class="t-mono">'+esc(p.inn||'—')+'</td><td>'+esc(TYPE[p.type]||p.type||'—')+'</td><td>'+esc(p.contract_no||'—')+'</td><td>'+fmtDate(p.created_at)+'</td><td>'+sb(p.status)+'</td></tr>'; }).join('');
+  }
+  q.addEventListener('input', render);
+  window.API.request('/partners').then(function(list){ all=list||[]; render(); })
+  .catch(function(err){ rows.innerHTML='<tr><td colspan="6" class="t-muted">'+(err.status===401?'Требуется вход.':(err.status===403?'Доступ только для персонала.':'Не удалось загрузить список.'))+'</td></tr>'; });
+})();
+</script>
 <script src="../assets/js/app.js"></script>
 </body>
 </html>
