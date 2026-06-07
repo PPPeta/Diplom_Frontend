@@ -8,24 +8,47 @@
 </head>
 <body data-zone="client" data-page="documents" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Документы</h1><p class="page-sub">Договоры, счета и акты по вашим заказам.</p></div><button class="btn btn-primary" data-toast="Загрузка документов скоро будет доступна" data-toast-type="error">Загрузить</button></div>
-  <div class="filters">
-    <div class="chips"><span class="chip active">Все</span><span class="chip">Договоры</span><span class="chip">Счета</span><span class="chip">Акты</span></div>
-    <div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск по документу…"></div>
-  </div>
-  <div class="table-wrap">
+  <div class="page-head"><div><h1 class="page-title">Документы</h1><p class="page-sub">Договоры, счета и акты по вашим заказам.</p></div></div>
+  <div class="table-wrap" id="docTable" style="display:none">
     <table>
       <thead><tr><th>Документ</th><th>Заказ</th><th>Дата</th><th>Тип</th><th>Статус</th><th></th></tr></thead>
-      <tbody>
-        <tr><td class="t-strong">📄 Договор № 1042</td><td>#1042</td><td>12.05.2026</td><td><span class="badge badge--blue">Договор</span></td><td><span class="badge badge--green">Подписан</span></td><td><button class="btn btn-sm" data-toast="Документ скачан" data-toast-type="success">Скачать</button></td></tr>
-        <tr><td class="t-strong">🧾 Счёт № 1042-1</td><td>#1042</td><td>12.05.2026</td><td><span class="badge badge--amber">Счёт</span></td><td><span class="badge badge--red">К оплате</span></td><td><button class="btn btn-sm" data-toast="Документ скачан" data-toast-type="success">Скачать</button></td></tr>
-        <tr><td class="t-strong">📄 Договор № 1021</td><td>#1021</td><td>21.04.2026</td><td><span class="badge badge--blue">Договор</span></td><td><span class="badge badge--green">Подписан</span></td><td><button class="btn btn-sm" data-toast="Документ скачан" data-toast-type="success">Скачать</button></td></tr>
-        <tr><td class="t-strong">✅ Акт № 1021</td><td>#1021</td><td>28.04.2026</td><td><span class="badge badge--gray">Акт</span></td><td><span class="badge badge--green">Закрыт</span></td><td><button class="btn btn-sm" data-toast="Документ скачан" data-toast-type="success">Скачать</button></td></tr>
-      </tbody>
+      <tbody id="docRows"></tbody>
     </table>
   </div>
-  <div class="notice mt">💡 Подписанные документы хранятся бессрочно и доступны для скачивания в любое время.</div>
+  <div class="card" id="docEmpty" style="display:none">
+    <h3>Пока нет документов</h3>
+    <p class="t-muted">Договоры, счета и акты появятся здесь после того, как менеджер оформит и загрузит их по вашим заказам.</p>
+  </div>
+  <div class="notice mt">💡 Документы по вашим заказам формирует менеджер. Здесь вы сможете их просмотреть и скачать.</div>
 </main>
+<script src="../assets/js/api.js"></script>
 <script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  var tbody=document.getElementById('docRows');
+  var empty=document.getElementById('docEmpty');
+  var wrap=document.getElementById('docTable');
+  function fmtDate(s){ if(!s) return ''; var d=new Date(s); return isNaN(d)?'':d.toLocaleDateString('ru-RU'); }
+  function render(list){
+    if(!list || !list.length){ wrap.style.display='none'; empty.style.display=''; return; }
+    var esc=API.escapeHtml;
+    empty.style.display='none'; wrap.style.display='';
+    tbody.innerHTML=list.map(function(d){
+      var name=d.filename || ((d.type||'Документ')+(d.number?(' № '+d.number):''));
+      return '<tr><td class="t-strong">📄 '+esc(name)+'</td><td>#'+esc(d.order_id)+'</td><td>'+esc(fmtDate(d.created_at))+'</td><td><span class="badge badge--blue">'+esc(d.type||'—')+'</span></td><td><span class="badge badge--green">'+esc(d.status||'—')+'</span></td><td><button class="btn btn-sm" data-id="'+esc(d.id)+'">Скачать</button></td></tr>';
+    }).join('');
+    tbody.querySelectorAll('button[data-id]').forEach(function(b){
+      b.addEventListener('click', function(){
+        API.documents.download(b.getAttribute('data-id')).catch(function(e){ window.toast((e&&e.message)||'Не удалось скачать','error'); });
+      });
+    });
+  }
+  function load(){
+    if(!window.API || !API.isAuthed()) return;
+    API.documents.list().then(render).catch(function(e){ window.toast((e&&e.message)||'Не удалось загрузить документы','error'); render([]); });
+  }
+  load();
+})();
+</script>
 </body>
 </html>

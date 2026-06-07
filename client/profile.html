@@ -10,38 +10,76 @@
 <main id="view">
   <div class="page-head"><div><h1 class="page-title">Профиль</h1><p class="page-sub">Личные данные и настройки аккаунта.</p></div></div>
   <div class="cols">
-    <form class="card" onsubmit="event.preventDefault(); window.toast('Изменения сохранены','success');">
+    <form class="card" id="profileForm">
       <h3>Личные данные</h3>
       <div class="form mt-sm">
         <div class="form-row">
-          <div class="field"><label for="p-name">ФИО</label><input id="p-name" value="Морозова Анна Сергеевна"></div>
-          <div class="field"><label for="p-phone">Телефон</label><input id="p-phone" value="+7 916 000-00-00"></div>
+          <div class="field"><label for="p-name">ФИО</label><input id="p-name" placeholder="Ваше имя"></div>
+          <div class="field"><label for="p-phone">Телефон</label><input id="p-phone" placeholder="+7 ..."></div>
         </div>
         <div class="form-row">
-          <div class="field"><label for="p-email">Email</label><input id="p-email" type="email" value="morozova@example.ru"></div>
-          <div class="field"><label for="p-city">Город</label><input id="p-city" value="Москва"></div>
+          <div class="field"><label for="p-email">Email</label><input id="p-email" type="email" disabled></div>
+          <div class="field"><label>Роль</label><div class="t-strong" id="p-role" style="padding:10px 0">—</div></div>
         </div>
         <button class="btn btn-primary" type="submit">Сохранить</button>
       </div>
     </form>
     <div class="grid" style="gap:18px">
-      <form class="card" onsubmit="event.preventDefault(); window.toast('Пароль обновлён','success');">
+      <form class="card" id="passwordForm">
         <h3>Безопасность</h3>
         <div class="form mt-sm">
           <div class="field"><label for="p-old">Текущий пароль</label><input id="p-old" type="password" placeholder="••••••••"></div>
-          <div class="field"><label for="p-new">Новый пароль</label><input id="p-new" type="password" placeholder="••••••••"></div>
+          <div class="field"><label for="p-new">Новый пароль</label><input id="p-new" type="password" placeholder="минимум 8 символов"></div>
+          <div class="field"><label for="p-new2">Повторите новый пароль</label><input id="p-new2" type="password" placeholder="••••••••"></div>
           <button class="btn" type="submit">Сменить пароль</button>
         </div>
       </form>
       <div class="card">
         <h3>Уведомления</h3>
-        <label class="checkbox"><input type="checkbox" checked> Email о статусе заказа</label>
-        <label class="checkbox"><input type="checkbox" checked> SMS о платежах</label>
-        <label class="checkbox"><input type="checkbox"> Новости и акции</label>
+        <label class="checkbox"><input type="checkbox" id="n-order" checked> Email о статусе заказа</label>
+        <label class="checkbox"><input type="checkbox" id="n-pay" checked> SMS о платежах</label>
+        <label class="checkbox"><input type="checkbox" id="n-news"> Новости и акции</label>
       </div>
     </div>
   </div>
 </main>
+<script src="../assets/js/api.js"></script>
 <script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  var ROLE={partner:'Клиент',manager:'Менеджер',executor:'Исполнитель',admin:'Администратор'};
+  function load(){
+    if(!window.API || !API.isAuthed()) return;
+    API.me().then(function(u){
+      $('p-name').value=u.full_name||'';
+      $('p-phone').value=u.phone||'';
+      $('p-email').value=u.email||'';
+      $('p-role').textContent=ROLE[u.role]||u.role||'—';
+    }).catch(function(e){ window.toast((e&&e.message)||'Не удалось загрузить профиль','error'); });
+  }
+  $('profileForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    API.updateProfile({ full_name:$('p-name').value.trim(), phone:$('p-phone').value.trim() })
+      .then(function(){ window.toast('Изменения сохранены','success'); })
+      .catch(function(err){ window.toast((err&&err.message)||'Ошибка сохранения','error'); });
+  });
+  $('passwordForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var cur=$('p-old').value, nw=$('p-new').value, nw2=$('p-new2').value;
+    if(nw.length<8){ window.toast('Новый пароль — минимум 8 символов','error'); return; }
+    if(nw!==nw2){ window.toast('Пароли не совпадают','error'); return; }
+    API.changePassword({ current_password:cur, new_password:nw })
+      .then(function(){ window.toast('Пароль обновлён','success'); $('p-old').value='';$('p-new').value='';$('p-new2').value=''; })
+      .catch(function(err){ window.toast((err&&err.message)||'Ошибка смены пароля','error'); });
+  });
+  ['n-order','n-pay','n-news'].forEach(function(id){
+    var el=$(id); if(!el) return;
+    var v=localStorage.getItem('vp_'+id); if(v!==null) el.checked=(v==='1');
+    el.addEventListener('change', function(){ localStorage.setItem('vp_'+id, el.checked?'1':'0'); });
+  });
+  load();
+})();
+</script>
 </body>
 </html>

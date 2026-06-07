@@ -18,14 +18,21 @@
     admin:    { label: 'Администрирование',  home: 'admin/users.html' }
   };
 
+  /* Код роли (бэкенд) -> читаемая подпись. */
+  var ROLE_LABEL = {
+    partner: 'Клиент', manager: 'Менеджер', executor: 'Исполнитель', admin: 'Администратор',
+    client: 'Клиент', staff: 'Менеджер'
+  };
+
   var NAV = {
     client: [
-      { id:'dashboard', label:'Главная',   href:'client/dashboard.html', ic:'🏠' },
-      { id:'orders',    label:'Мои заказы', href:'client/orders.html',    ic:'📑' },
-      { id:'documents', label:'Документы',  href:'client/documents.html', ic:'📄' },
-      { id:'payments',  label:'Платежи',    href:'client/payments.html',  ic:'💳' },
-      { id:'messages',  label:'Сообщения',  href:'client/messages.html',  ic:'💬' },
-      { id:'profile',   label:'Профиль',    href:'client/profile.html',   ic:'👤' }
+      { id:'dashboard',     label:'Главная',       href:'client/dashboard.html',    ic:'🏠' },
+      { id:'orders',        label:'Мои заказы',     href:'client/orders.html',       ic:'📑' },
+      { id:'order-create',  label:'Оформить заказ', href:'client/order-create.html', ic:'➕' },
+      { id:'documents',     label:'Документы',      href:'client/documents.html',    ic:'📄' },
+      { id:'payments',      label:'Платежи',        href:'client/payments.html',     ic:'💳' },
+      { id:'messages',      label:'Сообщения',      href:'client/messages.html',     ic:'💬' },
+      { id:'profile',       label:'Профиль',        href:'client/profile.html',      ic:'👤' }
     ],
     staff: [
       { id:'dashboard', label:'Dashboard',       href:'staff/dashboard.html', ic:'📊' },
@@ -58,16 +65,55 @@
     { id:'order',    label:'Оформить заказ', href:'order-new.html' }
   ];
 
-  var USERS = {
-    client:   { name:'Анна Морозова',  role:'Клиент',        ini:'АМ' },
-    staff:    { name:'Игорь Сафронов', role:'Менеджер',      ini:'ИС' },
-    executor: { name:'Павел Ким',      role:'Исполнитель',   ini:'ПК' },
-    admin:    { name:'Админ',          role:'Администратор', ini:'АД' }
-  };
-
   function L(href){ return root + href; }
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var FINE = window.matchMedia && window.matchMedia('(pointer:fine)').matches;
+
+  /* ---------- локальные хелперы для топбара ---------- */
+  function getStored(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+  function escapeHtmlLocal(v){
+    if (v === null || v === undefined) return '';
+    return String(v).replace(/[&<>"']/g, function(c){
+      return c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':c==='"'?'&quot;':'&#39;';
+    });
+  }
+  function initialsFrom(name){
+    if(!name) return '—';
+    var parts = String(name).trim().split(/\s+/);
+    var a = parts[0] ? parts[0][0] : '';
+    var b = parts[1] ? parts[1][0] : '';
+    return ((a+b).toUpperCase()) || '—';
+  }
+  function updateChip(u){
+    if(!u) return;
+    var nameEl=document.getElementById('userName');
+    var roleEl=document.getElementById('userRole');
+    var iniEl=document.getElementById('userIni');
+    if(u.full_name){ if(nameEl) nameEl.textContent=u.full_name; if(iniEl) iniEl.textContent=initialsFrom(u.full_name); }
+    var rl=ROLE_LABEL[u.role];
+    if(rl && roleEl) roleEl.textContent=rl;
+  }
+  function refreshUser(){
+    try {
+      if(!window.API || !API.isAuthed || !API.isAuthed()) return;
+      API.me().then(updateChip).catch(function(){});
+    } catch(e){}
+  }
+  function ensureApiAndRefresh(){
+    if(window.API){ refreshUser(); return; }
+    var s=document.createElement('script');
+    s.src=root+'assets/js/api.js';
+    s.onload=refreshUser; s.onerror=function(){};
+    document.head.appendChild(s);
+  }
+  function doLogout(){
+    if(window.API && API.logout){
+      API.logout().then(function(){ location.href=L('login.html'); }, function(){ location.href=L('login.html'); });
+    } else {
+      try { ['vp_access','vp_refresh','vp_role','vp_partner_id','vp_name'].forEach(function(k){ localStorage.removeItem(k); }); } catch(_){}
+      location.href=L('login.html');
+    }
+  }
 
   /* ---------- Toast ---------- */
   var host = document.createElement('div'); host.className = 'toast-host'; document.body.appendChild(host);
@@ -80,16 +126,6 @@
 
   function soonHandler(label){ return function(e){ e.preventDefault(); window.toast('Раздел «'+label+'» скоро будет готов', 'error'); }; }
 
-  /* ---------- Role switcher ---------- */
-  function roleSwitcher(){
-    var sel = document.createElement('select'); sel.className='role-switch'; sel.title='Демо: переключить роль';
-    Object.keys(ZONES).forEach(function(z){
-      var o = document.createElement('option'); o.value=z; o.textContent=ZONES[z].label; if(z===zone)o.selected=true; sel.appendChild(o);
-    });
-    sel.addEventListener('change', function(){ window.location.href = L(ZONES[sel.value].home); });
-    return sel;
-  }
-
   /* ---------- Topbar ---------- */
   var header = document.createElement('header'); header.className='topbar';
   var menuBtn = '';
@@ -101,20 +137,25 @@
       return '<a href="'+L(n.href)+'" data-id="'+n.id+'"'+(n.soon?' data-soon="'+n.label+'"':'')+(n.id===page?' class="active"':'')+'>'+n.label+'</a>';
     }).join('') + '</nav>';
   }
-  var right = '<div class="top-right">' + roleSwitcherPlaceholder() ;
-  function roleSwitcherPlaceholder(){ return '<span id="roleSlot"></span>'; }
+  var right = '<div class="top-right">';
   if (zone === 'public') {
     right += '<a class="btn btn-sm" href="'+L('login.html')+'">Войти</a>' +
              '<a class="btn btn-primary btn-sm" href="'+L('order-new.html')+'">Оформить заказ</a>';
   } else {
-    var u = USERS[zone] || USERS.client;
-    right += '<div class="user-chip"><span class="avatar">'+u.ini+'</span><span class="meta"><b>'+u.name+'</b><br><span>'+u.role+'</span></span></div>' +
-             '<a class="btn btn-sm" href="'+L('login.html')+'">Выйти</a>';
+    var dispName = getStored('vp_name') || 'Аккаунт';
+    var dispRole = ROLE_LABEL[getStored('vp_role')] || (ZONES[zone] ? ZONES[zone].label : '');
+    right += '<div class="user-chip" id="userChip"><span class="avatar" id="userIni">'+escapeHtmlLocal(initialsFrom(getStored('vp_name')))+'</span><span class="meta"><b id="userName">'+escapeHtmlLocal(dispName)+'</b><br><span id="userRole">'+escapeHtmlLocal(dispRole)+'</span></span></div>' +
+             '<a class="btn btn-sm" href="'+L('login.html')+'" id="logoutBtn">Выйти</a>';
   }
   right += '</div>';
   header.innerHTML = menuBtn + brand + topnav + right;
   body.insertBefore(header, body.firstChild);
-  document.getElementById('roleSlot').appendChild(roleSwitcher());
+
+  if (zone !== 'public') {
+    var logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', function(e){ e.preventDefault(); doLogout(); });
+    ensureApiAndRefresh();
+  }
 
   document.querySelectorAll('.topnav a[data-soon]').forEach(function(a){ a.addEventListener('click', soonHandler(a.getAttribute('data-soon'))); });
 

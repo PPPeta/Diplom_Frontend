@@ -87,7 +87,10 @@
     if (opts.headers) for (key in opts.headers) headers[key] = opts.headers[key];
 
     var body = opts.body;
-    if (opts.json !== undefined) {
+    if (opts.formData !== undefined) {
+      // multipart/form-data: не выставляем Content-Type — браузер сам добавит boundary.
+      body = opts.formData;
+    } else if (opts.json !== undefined) {
       headers["Content-Type"] = "application/json";
       body = JSON.stringify(opts.json);
     }
@@ -120,6 +123,24 @@
     });
   }
 
+  /* Скачивание бинарного файла с авторизацией (возвращает blob + имя файла). */
+  function requestBlob(path) {
+    var tok = getAccess();
+    var headers = {};
+    if (tok) headers["Authorization"] = "Bearer " + tok;
+    return fetch(API_BASE + path, { headers: headers }).then(function (res) {
+      if (!res.ok) {
+        if (res.status === 401) { clearSession(); redirectToLogin(); }
+        throw new Error("Ошибка " + res.status);
+      }
+      return res.blob().then(function (b) {
+        var cd = res.headers.get("Content-Disposition") || "";
+        var m = /filename=\"?([^\";]+)\"?/.exec(cd);
+        return { blob: b, filename: m ? decodeURIComponent(m[1]) : null };
+      });
+    });
+  }
+
   /* ---------- auth ---------- */
   function login(email, password) {
     var form = new URLSearchParams();
@@ -144,6 +165,15 @@
       }
       return u;
     });
+  }
+  function updateProfile(payload) {
+    return request("/auth/me", { method: "PATCH", json: payload }).then(function (u) {
+      if (u && u.full_name) localStorage.setItem(KEY.name, u.full_name);
+      return u;
+    });
+  }
+  function changePassword(payload) {
+    return request("/auth/change-password", { method: "POST", json: payload });
   }
   function logout() {
     var done = function () { clearSession(); };
@@ -178,6 +208,26 @@
       return request("/payments" + (orderId ? "?order_id=" + orderId : ""));
     }
   };
+  var documents = {
+    list: function (orderId) {
+      return request("/documents" + (orderId ? "?order_id=" + orderId : ""));
+    },
+    upload: function (formData) {
+      return request("/documents", { method: "POST", formData: formData });
+    },
+    remove: function (id) {
+      return request("/documents/" + id, { method: "DELETE" });
+    },
+    download: function (id) {
+      return requestBlob("/documents/" + id + "/download").then(function (r) {
+        var url = URL.createObjectURL(r.blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = r.filename || ("document-" + id);
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      });
+    }
+  };
 
   /* ---------- helpers ---------- */
   function fmtPrice(v) {
@@ -210,9 +260,12 @@
   window.API = {
     base: API_BASE,
     request: request,
+    requestBlob: requestBlob,
     login: login,
     registerPartner: registerPartner,
     me: me,
+    updateProfile: updateProfile,
+    changePassword: changePassword,
     logout: logout,
     isAuthed: isAuthed,
     requireAuth: requireAuth,
@@ -225,6 +278,7 @@
     requests: requests,
     orders: orders,
     payments: payments,
+    documents: documents,
     fmtPrice: fmtPrice,
     escapeHtml: escapeHtml
   };
