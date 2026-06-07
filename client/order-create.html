@@ -21,13 +21,12 @@
       <div style="display:flex;justify-content:space-between;align-items:center"><span class="t-muted">Позиций</span><b id="cartCount">0</b></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:18px"><span>Итого</span><b id="total" class="t-mono">0 ₽</b></div>
       <div class="field" style="margin-top:14px"><label>Комментарий к заказу (необязательно)</label><textarea id="orderNote" class="input" rows="2" placeholder="Пожелания, адрес, детали…"></textarea></div>
-      <button class="btn btn-primary" id="createBtn" style="width:100%;margin-top:12px" disabled>Создать заказ</button>
+      <button class="btn btn-primary" id="createBtn" style="width:100%;margin-top:12px">Создать заказ</button>
       <p class="t-muted" style="margin-top:10px;font-size:13px">💡 Сумма предварительная; менеджер подтвердит заказ.</p>
     </aside>
   </div>
 </main>
 <script src="../assets/js/api.js"></script>
-<script src="../assets/js/app.js"></script>
 <script>
 (function(){
   var esc=window.API.escapeHtml;
@@ -45,7 +44,6 @@
     SVC.forEach(function(s){ var q=qval(s.id); if(q>0){ var sum=q*Number(s.base_price); t+=sum; items.push({s:s,q:q,sum:sum}); } });
     totalEl.textContent=window.API.fmtPrice(t);
     countEl.textContent=items.length;
-    btn.disabled=items.length===0;
     if(!items.length){ cartEl.innerHTML='<div class="list-row"><span class="t-muted">Корзина пуста — укажите количество услуг слева.</span></div>'; return; }
     cartEl.innerHTML=items.map(function(it){
       return '<div class="list-row" style="display:flex;justify-content:space-between;gap:10px"><span>'+esc(it.s.name)+' <span class="t-muted">×'+it.q+' × '+window.API.fmtPrice(it.s.base_price)+'</span></span><b class="t-mono">'+window.API.fmtPrice(it.sum)+'</b></div>';
@@ -70,7 +68,7 @@
   btn.addEventListener('click', function(){
     var items=[];
     SVC.forEach(function(s){ var q=qval(s.id); if(q>0) items.push({ service_id:s.id, qty:q }); });
-    if(!items.length){ if(window.toast) toast('Выберите хотя бы одну услугу','error'); return; }
+    if(!items.length){ if(window.toast) toast('Выберите хотя бы одну услугу — нажмите «+» у нужных позиций','error'); return; }
     btn.disabled=true;
     var payload={ items:items };
     var note=(noteEl.value||'').trim();
@@ -83,5 +81,6 @@
   window.API.services.list(true).then(render).catch(function(e){ listEl.innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить услуги.</span></div>'; });
 })();
 </script>
+<script src="../assets/js/app.js"></script>
 </body>
 </html>
