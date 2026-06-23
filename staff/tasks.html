@@ -168,7 +168,13 @@
   function orderLabel(o){
     var parts = ['#' + o.id];
     if (o.number) parts.push(o.number);
-    if (o.client_ref) parts.push(o.client_ref);
+    if (o.client_ref) {
+      // client_ref может содержать длинный текст из заявки —
+      // показываем только начало (имя клиента) и обрезаем по длине.
+      var ref = String(o.client_ref).split(' | ')[0].split(';')[0].trim();
+      if (ref.length > 40) ref = ref.slice(0, 40) + '…';
+      if (ref) parts.push(ref);
+    }
     if (o.status) parts.push('[' + o.status + ']');
     return parts.join(' · ');
   }
