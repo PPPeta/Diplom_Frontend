@@ -8,8 +8,54 @@
 </head>
 <body data-zone="staff" data-page="tasks" data-root="../">
 <main id="view">
-  <div class="page-head"><div><h1 class="page-title">Задачи</h1><p class="page-sub">Назначения исполнителям и контроль сроков.</p></div></div>
-  <div class="filters"><div class="chips" id="chips"><span class="chip active" data-st="">Все</span><span class="chip" data-st="open">Новые</span><span class="chip" data-st="in_progress">В работе</span><span class="chip" data-st="done">Готово</span></div></div>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Задачи</h1>
+      <p class="page-sub">Назначения исполнителям и контроль сроков.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h"><h3 style="margin:0">Новая задача</h3></div>
+    <form class="form" id="form-create" autocomplete="off">
+      <div class="form-row">
+        <div class="field">
+          <label>Заказ ID</label>
+          <input class="input" id="f-order" type="number" min="1" required placeholder="например 12">
+        </div>
+        <div class="field">
+          <label>Исполнитель</label>
+          <select class="input" id="f-executor">
+            <option value="">(не назначать)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Заголовок</label>
+          <input class="input" id="f-title" required placeholder="Например: Подготовить договор">
+        </div>
+        <div class="field">
+          <label>Срок</label>
+          <input class="input" id="f-due" type="date">
+        </div>
+      </div>
+      <div class="quick-actions">
+        <button class="btn btn-primary" type="submit">Создать</button>
+        <button class="btn" type="button" id="btn-clear">Очистить</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="filters">
+    <div class="chips" id="chips">
+      <span class="chip active" data-st="">Все</span>
+      <span class="chip" data-st="open">Новые</span>
+      <span class="chip" data-st="in_progress">В работе</span>
+      <span class="chip" data-st="done">Готово</span>
+    </div>
+  </div>
+
   <div class="table-wrap">
     <table>
       <thead><tr><th>Задача</th><th>Заказ</th><th>Исполнитель</th><th>Срок</th><th>Статус</th></tr></thead>
@@ -21,34 +67,206 @@
 <script>
 (function(){
   var esc = window.API.escapeHtml;
+
   var TS = { open:{l:'Новая'}, in_progress:{l:'В работе'}, done:{l:'Готово'} };
-  var rows=document.getElementById('rows');
-  var chips=document.getElementById('chips');
-  var all=[];
-  function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return esc(iso); return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
-  function activeSt(){ var a=chips.querySelector('.chip.active'); return a?(a.getAttribute('data-st')||''):''; }
-  function statusSelect(t){
-    return '<select class="input" data-task="'+t.id+'" data-prev="'+esc(t.status)+'" style="padding:4px 8px">' +
-      Object.keys(TS).map(function(k){ return '<option value="'+k+'"'+(k===t.status?' selected':'')+'>'+TS[k].l+'</option>'; }).join('') + '</select>';
+
+  var rows = document.getElementById('rows');
+  var chips = document.getElementById('chips');
+
+  var f = {
+    form: document.getElementById('form-create'),
+    order: document.getElementById('f-order'),
+    executor: document.getElementById('f-executor'),
+    title: document.getElementById('f-title'),
+    due: document.getElementById('f-due'),
+    clear: document.getElementById('btn-clear')
+  };
+
+  var all = [];
+  var executors = []; // [{id, full_name}]
+
+  function fmtDate(iso){
+    if(!iso) return '—';
+    var d = new Date(iso);
+    if(isNaN(d)) return esc(iso);
+    return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);
   }
+
+  function activeSt(){
+    var a = chips.querySelector('.chip.active');
+    return a ? (a.getAttribute('data-st')||'') : '';
+  }
+
+  function statusSelect(t){
+    return '<select class="input" data-task="'+t.id+'" data-prev="'+esc(t.status)+'" style="padding:6px 10px">' +
+      Object.keys(TS).map(function(k){
+        return '<option value="'+k+'"'+(k===t.status?' selected':'')+'>'+TS[k].l+'</option>';
+      }).join('') +
+    '</select>';
+  }
+
+  function executorSelect(t){
+    var cur = (t.executor_id === null || t.executor_id === undefined) ? '' : String(t.executor_id);
+    var opts = '<option value="">(не назначен)</option>' +
+      executors.map(function(u){
+        return '<option value="'+u.id+'"'+(String(u.id)===cur?' selected':'')+'>'+esc(u.full_name)+' (id '+u.id+')</option>';
+      }).join('');
+
+    return '<select class="input" data-task-exec="'+t.id+'" data-prev="'+esc(cur)+'" style="padding:6px 10px">'+opts+'</select>';
+  }
+
   function render(){
-    var st=activeSt();
-    var list=all.filter(function(t){ return !st || t.status===st; });
-    if(!list.length){ rows.innerHTML='<tr><td colspan="5" class="t-muted">Задач нет.</td></tr>'; return; }
-    rows.innerHTML=list.map(function(t){
-      var exec = t.executor_id ? ('Исп. #'+t.executor_id) : '<span class="t-muted">не назначен</span>';
-      return '<tr><td class="t-strong">'+esc(t.title)+'</td><td>#'+t.order_id+'</td><td>'+exec+'</td><td>'+fmtDate(t.due_date)+'</td><td>'+statusSelect(t)+'</td></tr>';
+    var st = activeSt();
+    var list = all.filter(function(t){ return !st || t.status===st; });
+
+    if(!list.length){
+      rows.innerHTML = '<tr><td colspan="5" class="t-muted">Задач нет.</td></tr>';
+      return;
+    }
+
+    rows.innerHTML = list.map(function(t){
+      var execCell;
+      if (executors.length) {
+        execCell = executorSelect(t);
+      } else {
+        execCell = t.executor_id ? ('Исп. #'+t.executor_id) : '<span class="t-muted">не назначен</span>';
+      }
+
+      return '<tr>'+
+        '<td class="t-strong">'+esc(t.title)+'</td>'+
+        '<td>#'+t.order_id+'</td>'+
+        '<td>'+execCell+'</td>'+
+        '<td>'+fmtDate(t.due_date)+'</td>'+
+        '<td>'+statusSelect(t)+'</td>'+
+      '</tr>';
     }).join('');
   }
-  chips.querySelectorAll('.chip').forEach(function(ch){ ch.addEventListener('click', function(){ chips.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');}); ch.classList.add('active'); render(); }); });
-  rows.addEventListener('change', function(e){
-    var sel=e.target.closest('select[data-task]'); if(!sel) return;
-    var id=sel.getAttribute('data-task'), st=sel.value, prev=sel.getAttribute('data-prev'); sel.disabled=true;
-    window.API.request('/tasks/'+id, { method:'PATCH', json:{ status:st } }).then(function(){ window.toast('Статус задачи обновлён','success'); sel.setAttribute('data-prev',st); sel.disabled=false; var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.status=st; })
-    .catch(function(err){ window.toast('Ошибка: '+err.message,'error'); sel.value=prev; sel.disabled=false; });
+
+  function setExecutors(list){
+    executors = Array.isArray(list) ? list : [];
+
+    // fill create form select
+    var base = '<option value="">(не назначать)</option>';
+    f.executor.innerHTML = base + executors.map(function(u){
+      return '<option value="'+u.id+'">'+esc(u.full_name)+' (id '+u.id+')</option>';
+    }).join('');
+
+    render();
+  }
+
+  function loadExecutors(){
+    return window.API.request('/users?role=executor')
+      .then(function(list){ setExecutors(list || []); })
+      .catch(function(){
+        // не блокируем страницу: просто оставим «Исп. #id»
+      });
+  }
+
+  function loadTasks(){
+    return window.API.request('/tasks')
+      .then(function(list){ all = list || []; render(); })
+      .catch(function(err){
+        rows.innerHTML = '<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход.':'Не удалось загрузить задачи.')+'</td></tr>';
+      });
+  }
+
+  // filters
+  chips.querySelectorAll('.chip').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      chips.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});
+      ch.classList.add('active');
+      render();
+    });
   });
-  window.API.request('/tasks').then(function(list){ all=list||[]; render(); })
-  .catch(function(err){ rows.innerHTML='<tr><td colspan="5" class="t-muted">'+(err.status===401?'Требуется вход.':'Не удалось загрузить задачи.')+'</td></tr>'; });
+
+  // change handlers (status + executor)
+  rows.addEventListener('change', function(e){
+    var selSt = e.target.closest ? e.target.closest('select[data-task]') : null;
+    if (selSt) {
+      var id = selSt.getAttribute('data-task');
+      var st = selSt.value;
+      var prev = selSt.getAttribute('data-prev');
+      selSt.disabled = true;
+
+      window.API.request('/tasks/'+id, { method:'PATCH', json:{ status:st } })
+        .then(function(){
+          window.toast('Статус задачи обновлён','success');
+          selSt.setAttribute('data-prev', st);
+          selSt.disabled = false;
+          var it = all.filter(function(x){ return String(x.id)===String(id); })[0];
+          if (it) it.status = st;
+        })
+        .catch(function(err){
+          window.toast('Ошибка: '+err.message,'error');
+          selSt.value = prev;
+          selSt.disabled = false;
+        });
+      return;
+    }
+
+    var selExec = e.target.closest ? e.target.closest('select[data-task-exec]') : null;
+    if (selExec) {
+      var id2 = selExec.getAttribute('data-task-exec');
+      var v = selExec.value;
+      var prev2 = selExec.getAttribute('data-prev');
+      selExec.disabled = true;
+
+      window.API.request('/tasks/'+id2, { method:'PATCH', json:{ executor_id: v ? Number(v) : null } })
+        .then(function(){
+          window.toast('Исполнитель назначен','success');
+          selExec.setAttribute('data-prev', v);
+          selExec.disabled = false;
+          var it2 = all.filter(function(x){ return String(x.id)===String(id2); })[0];
+          if (it2) it2.executor_id = v ? Number(v) : null;
+        })
+        .catch(function(err){
+          window.toast('Ошибка: '+err.message,'error');
+          selExec.value = prev2;
+          selExec.disabled = false;
+        });
+      return;
+    }
+  });
+
+  // create form
+  function clearForm(){
+    f.order.value = '';
+    f.executor.value = '';
+    f.title.value = '';
+    f.due.value = '';
+  }
+  f.clear.addEventListener('click', function(){ clearForm(); });
+
+  f.form.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    var payload = {
+      order_id: Number(f.order.value),
+      title: f.title.value.trim(),
+      executor_id: f.executor.value ? Number(f.executor.value) : null,
+      due_date: f.due.value ? f.due.value : null
+    };
+
+    var btn = f.form.querySelector('button[type=submit]');
+    btn.disabled = true;
+
+    window.API.request('/tasks', { method:'POST', json: payload })
+      .then(function(t){
+        window.toast('Задача создана','success');
+        all.unshift(t);
+        clearForm();
+        render();
+        btn.disabled = false;
+      })
+      .catch(function(err){
+        window.toast('Ошибка: '+err.message,'error');
+        btn.disabled = false;
+      });
+  });
+
+  // boot
+  loadTasks();
+  loadExecutors();
 })();
 </script>
 <script src="../assets/js/app.js"></script>
