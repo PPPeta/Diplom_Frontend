@@ -245,6 +245,18 @@
   var payments = {
     list: function (orderId) {
       return request("/payments" + (orderId ? "?order_id=" + orderId : ""));
+    },
+    get: function (id) { return request("/payments/" + id); },
+    setStatus: function (id, status) {
+      return request("/payments/" + id + "/status", { method: "PATCH", json: { status: status } });
+    },
+    /* Создать оплату заказа через ЮKassa (возвращает платёж с confirmation_url). */
+    checkout: function (orderId) {
+      return request("/payments/yookassa/checkout", { method: "POST", json: { order_id: orderId } });
+    },
+    /* Опросить статус платежа в ЮKassa и синхронизировать локальный. */
+    sync: function (id) {
+      return request("/payments/" + id + "/yookassa/sync", { method: "POST" });
     }
   };
   var documents = {

@@ -29,11 +29,11 @@
   var KIND={ payment:'Оплата', commission:'Комиссия' };
   var rows=document.getElementById('rows');
   var all=[];
-  function badge(st){ var m={pending:['Ожидает','amber'],paid:['Оплачен','green']}; var v=m[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
+  function badge(st){ var m={pending:['Ожидает','amber'],paid:['Оплачен','green'],canceled:['Отменён','red']}; var v=m[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
   function num(v){ return Number(v)||0; }
   function recalc(){
     var pending=0,paid=0,comm=0;
-    all.forEach(function(p){ var a=num(p.amount); if(p.status==='paid') paid+=a; else pending+=a; if(p.kind==='commission') comm+=a; });
+    all.forEach(function(p){ var a=num(p.amount); if(p.status==='paid') paid+=a; else if(p.status==='pending') pending+=a; if(p.kind==='commission') comm+=a; });
     document.getElementById('s-pending').textContent=window.API.fmtPrice(pending);
     document.getElementById('s-paid').textContent=window.API.fmtPrice(paid);
     document.getElementById('s-count').textContent=all.length;
@@ -42,8 +42,10 @@
   function render(){
     if(!all.length){ rows.innerHTML='<tr><td colspan="7" class="t-muted">Платежей нет.</td></tr>'; return; }
     rows.innerHTML=all.map(function(p){
-      var act = p.status!=='paid' ? '<button class="btn btn-sm btn-primary" data-pay="'+p.id+'">Оплачен</button>' : '';
-      return '<tr><td class="t-strong">#'+p.id+'</td><td>#'+p.order_id+'</td><td>'+(DIR[p.direction]||p.direction)+'</td><td>'+(KIND[p.kind]||p.kind)+'</td><td class="t-mono">'+window.API.fmtPrice(p.amount)+'</td><td>'+badge(p.status)+'</td><td>'+act+'</td></tr>';
+      var act = p.status==='pending' ? '<button class="btn btn-sm btn-primary" data-pay="'+p.id+'">Оплачен</button>' : '';
+      if(p.provider==='yookassa' && p.status==='pending'){ act += ' <button class="btn btn-sm" data-sync="'+p.id+'">Проверить</button>'; }
+      var kind=(KIND[p.kind]||p.kind)+(p.provider==='yookassa'?' · ЮKassa':'');
+      return '<tr><td class="t-strong">#'+p.id+'</td><td>#'+p.order_id+'</td><td>'+(DIR[p.direction]||p.direction)+'</td><td>'+kind+'</td><td class="t-mono">'+window.API.fmtPrice(p.amount)+'</td><td>'+badge(p.status)+'</td><td>'+act+'</td></tr>';
     }).join('');
   }
   rows.addEventListener('click', function(e){
@@ -51,6 +53,14 @@
     var id=btn.getAttribute('data-pay'); btn.disabled=true;
     window.API.request('/payments/'+id+'/status', { method:'PATCH', json:{ status:'paid' } }).then(function(){ window.toast('Платёж отмечен оплаченным','success'); var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.status='paid'; recalc(); render(); })
     .catch(function(err){ window.toast('Ошибка: '+err.message,'error'); btn.disabled=false; });
+  });
+  rows.addEventListener('click', function(e){
+    var btn=e.target.closest('button[data-sync]'); if(!btn) return;
+    var id=btn.getAttribute('data-sync'); btn.disabled=true;
+    window.API.payments.sync(id).then(function(p){
+      window.toast(p.status==='paid'?'Оплата подтверждена':(p.status==='canceled'?'Платёж отменён':'Пока не оплачен'), p.status==='paid'?'success':'info');
+      var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it){ it.status=p.status; } recalc(); render();
+    }).catch(function(err){ btn.disabled=false; window.toast('Не удалось проверить: '+err.message,'error'); });
   });
   window.API.payments.list().then(function(list){ all=list||[]; recalc(); render(); })
   .catch(function(err){ rows.innerHTML='<tr><td colspan="7" class="t-muted">'+(err.status===401?'Требуется вход менеджера.':'Не удалось загрузить платежи.')+'</td></tr>'; });

@@ -33,6 +33,7 @@
       <div class="card">
         <div class="card-h"><h3>Оплата</h3></div>
         <div id="pays"><div class="list-row"><span class="t-muted">Загрузка…</span></div></div>
+        <div class="mt-sm"><button class="btn btn-primary" id="pay-yk" disabled>Оплатить через ЮKassa</button> <span class="t-muted" id="pay-note"></span></div>
       </div>
       <div class="card">
         <div class="card-h"><h3>Обсуждение заказа</h3></div>
@@ -52,7 +53,7 @@
 (function(){
   var OS={ new:['Новый','blue'], confirmed:['Подтверждён','blue'], in_progress:['В работе','amber'], done:['Выполнен','green'], closed:['Закрыт','gray'], cancelled:['Отменён','red'] };
   function badge(st){ var v=OS[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
-  var PB={ pending:['Ожидает','amber'], paid:['Оплачен','green'] };
+  var PB={ pending:['Ожидает','amber'], paid:['Оплачен','green'], canceled:['Отменён','red'] };
   function pbadge(st){ var v=PB[st]||[st,'gray']; return '<span class="badge badge--'+v[1]+'">'+v[0]+'</span>'; }
   // Реальный state machine бэкенда.
   var TRANSITIONS={ new:['confirmed','cancelled'], confirmed:['in_progress','cancelled'], in_progress:['done','cancelled'], done:['closed'], closed:[], cancelled:[] };
@@ -101,6 +102,9 @@
     document.getElementById('info').innerHTML='<dt>Номер</dt><dd>'+esc(o.number)+'</dd><dt>Клиент</dt><dd>'+esc(clientLabel(o))+'</dd><dt>Статус</dt><dd>'+badge(o.status)+'</dd><dt>Сумма</dt><dd class="t-mono">'+window.API.fmtPrice(o.total_amount)+'</dd>';
     renderItems(o);
     renderActions(o);
+    // Кнопка оплаты доступна, пока заказ не закрыт/не отменён.
+    var payBtn=document.getElementById('pay-yk');
+    if(payBtn){ var blocked=(o.status==='closed'||o.status==='cancelled'); payBtn.disabled=blocked; document.getElementById('pay-note').textContent=blocked?('Заказ '+(o.status==='cancelled'?'отменён':'закрыт')+'.'):''; }
   }
 
   window.API.services.list().then(function(s){ (s||[]).forEach(function(x){ svcMap[x.id]=x.name; }); }).catch(function(){}).then(function(){
@@ -110,10 +114,47 @@
     document.getElementById('actions').innerHTML=''; document.getElementById('items').innerHTML=''; document.getElementById('info').innerHTML='';
   });
 
-  window.API.payments.list(id).then(function(list){
-    list=list||[]; var box=document.getElementById('pays');
-    box.innerHTML = list.length ? list.map(function(p){ return '<div class="list-row"><span>'+window.API.fmtPrice(p.amount)+' <span class="t-muted">'+(p.kind==='commission'?'комиссия':'оплата')+'</span></span>'+pbadge(p.status)+'</div>'; }).join('') : '<div class="list-row"><span class="t-muted">Платежей пока нет.</span></div>';
-  }).catch(function(){ document.getElementById('pays').innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить оплаты.</span></div>'; });
+  // --- Оплаты ---
+  function payRow(p){
+    var prov = p.provider==='yookassa' ? ' <span class="t-muted">· ЮKassa</span>' : '';
+    var act='';
+    if(p.provider==='yookassa' && p.status==='pending'){
+      if(p.confirmation_url) act += ' <a class="btn btn-sm btn-primary" href="'+esc(p.confirmation_url)+'" target="_blank" rel="noopener">Оплатить</a>';
+      act += ' <button class="btn btn-sm" data-sync="'+p.id+'">Проверить</button>';
+    }
+    return '<div class="list-row"><span>'+window.API.fmtPrice(p.amount)+' <span class="t-muted">'+(p.kind==='commission'?'комиссия':'оплата')+'</span>'+prov+'</span><span>'+pbadge(p.status)+act+'</span></div>';
+  }
+  function loadPays(){
+    var box=document.getElementById('pays');
+    window.API.payments.list(id).then(function(list){
+      list=list||[];
+      box.innerHTML = list.length ? list.map(payRow).join('') : '<div class="list-row"><span class="t-muted">Платежей пока нет.</span></div>';
+    }).catch(function(){ box.innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить оплаты.</span></div>'; });
+  }
+  // Проверка статуса платежа в ЮKassa.
+  document.getElementById('pays').addEventListener('click', function(e){
+    var btn=e.target.closest('button[data-sync]'); if(!btn) return;
+    var pid=btn.getAttribute('data-sync'); btn.disabled=true;
+    window.API.payments.sync(pid).then(function(p){
+      if(window.toast) window.toast(p.status==='paid'?'Оплата подтверждена':(p.status==='canceled'?'Платёж отменён':'Платёж пока не оплачен'), p.status==='paid'?'success':'info');
+      loadPays();
+    }).catch(function(err){ btn.disabled=false; if(window.toast) window.toast('Не удалось проверить: '+err.message,'error'); });
+  });
+  // Создание оплаты через ЮKassa.
+  document.getElementById('pay-yk').addEventListener('click', function(){
+    var btn=this; btn.disabled=true; var note=document.getElementById('pay-note'); note.textContent='Создаём платёж…';
+    window.API.payments.checkout(id).then(function(p){
+      note.textContent='';
+      if(p.confirmation_url){ window.open(p.confirmation_url,'_blank','noopener'); }
+      else if(window.toast){ window.toast('Платёж создан','success'); }
+      loadPays(); btn.disabled=false;
+    }).catch(function(err){
+      btn.disabled=false; note.textContent='';
+      var msg = err.status===503 ? 'ЮKassa не настроена' : (err.status===400 ? 'Сумма заказа должна быть больше нуля' : (err.status===403 ? 'Нет доступа' : 'Не удалось создать платёж'));
+      if(window.toast) window.toast(msg,'error');
+    });
+  });
+  loadPays();
 
   // --- Обсуждение заказа ---
   function loadMessages(){
