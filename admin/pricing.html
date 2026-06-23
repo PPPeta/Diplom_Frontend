@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Прайс-листы и скидки — Администрирование</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body data-zone="admin" data-page="pricing" data-root="../">
+<main id="view">
+  <div class="page-head"><div><h1 class="page-title">Прайс-листы и скидки</h1><p class="page-sub">Управление прайс-листами, их позициями и партнёрскими условиями.</p></div></div>
+
+  <div class="card">
+    <div class="card-h"><h3>Добавить прайс-лист</h3></div>
+    <form class="form mt-sm" id="plForm">
+      <div class="form-row">
+        <div class="field"><label for="pl-code">Код</label><input id="pl-code" placeholder="напр. base-2026" required></div>
+        <div class="field"><label for="pl-name">Название</label><input id="pl-name" placeholder="Название прайс-листа" required></div>
+        <div class="field"><label for="pl-kind">Тип</label><select id="pl-kind"><option value="base">Базовый</option><option value="partner">Партнёрский</option><option value="promo">Акция</option></select></div>
+        <div class="field" id="pl-partner-field" style="display:none"><label for="pl-partner">Партнёр</label><select id="pl-partner"></select></div>
+        <div class="field"><label for="pl-from">Действует с</label><input id="pl-from" type="date"></div>
+        <div class="field"><label for="pl-to">Действует по</label><input id="pl-to" type="date"></div>
+      </div>
+      <button class="btn btn-primary" type="submit" id="plBtn">Добавить прайс-лист</button>
+    </form>
+  </div>
+
+  <div class="table-wrap mt">
+    <table>
+      <thead><tr><th>Код</th><th>Название</th><th>Тип</th><th>Партнёр</th><th>Позиций</th><th>Активен</th><th></th></tr></thead>
+      <tbody id="plRows"><tr><td colspan="7" class="t-muted">Загрузка…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card mt" id="itemsCard" style="display:none">
+    <div class="card-h"><h3 id="itemsTitle">Позиции прайс-листа</h3><button class="btn btn-sm" id="itemsClose" type="button">Закрыть</button></div>
+    <form class="form mt-sm" id="itemForm">
+      <div class="form-row">
+        <div class="field"><label for="it-service">Услуга</label><select id="it-service"></select></div>
+        <div class="field"><label for="it-price">Цена, ₽</label><input id="it-price" type="number" min="0" step="0.01" value="0"></div>
+      </div>
+      <button class="btn" type="submit">Добавить позицию</button>
+    </form>
+    <div class="table-wrap mt-sm">
+      <table>
+        <thead><tr><th>Услуга</th><th>Цена</th><th></th></tr></thead>
+        <tbody id="itemRows"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-primary mt-sm" id="itemsSave" type="button">Сохранить позиции</button>
+  </div>
+
+  <div class="card mt">
+    <div class="card-h"><h3>Партнёрские условия</h3></div>
+    <div class="form-row mt-sm">
+      <div class="field"><label for="pt-partner">Партнёр</label><select id="pt-partner"></select></div>
+      <div class="field"><label for="pt-pricelist">Прайс-лист партнёра</label><select id="pt-pricelist"></select></div>
+      <div class="field" style="align-self:flex-end"><button class="btn" id="ptAssignBtn" type="button">Назначить прайс-лист</button></div>
+    </div>
+    <div class="table-wrap mt">
+      <table>
+        <thead><tr><th>Скидка, %</th><th>Комиссия, %</th><th>Приоритет</th><th>Примечание</th><th></th></tr></thead>
+        <tbody id="termRows"><tr><td colspan="5" class="t-muted">Выберите партнёра.</td></tr></tbody>
+      </table>
+    </div>
+    <form class="form mt-sm" id="termForm">
+      <div class="form-row">
+        <div class="field"><label for="tm-discount">Скидка, %</label><input id="tm-discount" type="number" min="0" max="100" step="0.01" value="0"></div>
+        <div class="field"><label for="tm-commission">Комиссия, %</label><input id="tm-commission" type="number" min="0" max="100" step="0.01" value="0"></div>
+        <div class="field"><label for="tm-priority">Приоритет</label><input id="tm-priority" type="number" min="0" step="1" value="100"></div>
+        <div class="field"><label for="tm-notes">Примечание</label><input id="tm-notes" placeholder="необязательно"></div>
+      </div>
+      <button class="btn btn-primary" type="submit" id="termBtn">Добавить условие</button>
+    </form>
+  </div>
+</main>
+<script src="../assets/js/api.js"></script>
+<script>
+(function(){
+  var esc=window.API.escapeHtml, fmt=window.API.fmtPrice;
+  var KIND_LABEL={base:'Базовый',partner:'Партнёрский',promo:'Акция'};
+  var partnersList=[], servicesList=[], priceLists=[];
+  var curPlId=null, curItems=[];
+
+  function errMsg(err){ return err && err.status===403 ? 'Недостаточно прав' : ((err&&err.message)||'Ошибка'); }
+  function partnerName(id){ var p=partnersList.filter(function(x){return String(x.id)===String(id);})[0]; return p?p.org_name:('#'+id); }
+  function serviceName(id){ var s=servicesList.filter(function(x){return String(x.id)===String(id);})[0]; return s?s.name:('#'+id); }
+
+  /* ---------- прайс-листы ---------- */
+  var plRows=document.getElementById('plRows');
+  function renderPl(){
+    if(!priceLists.length){ plRows.innerHTML='<tr><td colspan="7" class="t-muted">Прайс-листов нет. Добавьте первый через форму выше.</td></tr>'; return; }
+    plRows.innerHTML=priceLists.map(function(pl){
+      var act = pl.is_active ? '<span class="badge badge--green">Да</span>' : '<span class="badge badge--gray">Нет</span>';
+      var cnt = (pl.items && pl.items.length) || 0;
+      return '<tr><td class="t-mono">'+esc(pl.code)+'</td><td class="t-strong">'+esc(pl.name)+'</td><td>'+esc(KIND_LABEL[pl.kind]||pl.kind)+'</td><td>'+(pl.partner_id?esc(partnerName(pl.partner_id)):'—')+'</td><td class="t-mono">'+cnt+'</td><td>'+act+'</td><td><button class="btn btn-sm" data-items="'+pl.id+'">Позиции</button> <button class="btn btn-sm" data-toggle="'+pl.id+'" data-to="'+(pl.is_active?'0':'1')+'">'+(pl.is_active?'Скрыть':'Включить')+'</button> <button class="btn btn-sm btn-danger" data-del="'+pl.id+'">Удалить</button></td></tr>';
+    }).join('');
+  }
+  function loadPl(){
+    return window.API.priceLists.list().then(function(list){ priceLists=list||[]; renderPl(); fillPtPricelist(); }).catch(function(err){ plRows.innerHTML='<tr><td colspan="7" class="t-muted">'+(err.status===401?'Требуется вход.':'Не удалось загрузить прайс-листы.')+'</td></tr>'; });
+  }
+
+  /* тип → показ поля «Партнёр» */
+  var kindSel=document.getElementById('pl-kind');
+  var partnerField=document.getElementById('pl-partner-field');
+  kindSel.addEventListener('change', function(){ partnerField.style.display = kindSel.value==='partner' ? '' : 'none'; });
+
+  document.getElementById('plForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var kind=kindSel.value;
+    var payload={
+      code:document.getElementById('pl-code').value.trim(),
+      name:document.getElementById('pl-name').value.trim(),
+      kind:kind,
+      valid_from:document.getElementById('pl-from').value||null,
+      valid_to:document.getElementById('pl-to').value||null,
+      is_active:true,
+      items:[]
+    };
+    if(kind==='partner'){
+      var pv=document.getElementById('pl-partner').value;
+      if(!pv){ window.toast('Выберите партнёра','error'); return; }
+      payload.partner_id=Number(pv);
+    }
+    if(!payload.code||!payload.name){ window.toast('Код и название обязательны','error'); return; }
+    var btn=document.getElementById('plBtn'); btn.disabled=true;
+    window.API.priceLists.create(payload).then(function(){ window.toast('Прайс-лист добавлен','success'); e.target.reset(); partnerField.style.display='none'; btn.disabled=false; loadPl(); })
+    .catch(function(err){ btn.disabled=false; window.toast(err.status===400?((err&&err.message)||'Некорректные данные'):errMsg(err),'error'); });
+  });
+
+  plRows.addEventListener('click', function(e){
+    var it=e.target.closest('button[data-items]');
+    if(it){ openItems(it.getAttribute('data-items')); return; }
+    var tg=e.target.closest('button[data-toggle]');
+    if(tg){ var id=tg.getAttribute('data-toggle'); var to=tg.getAttribute('data-to')==='1'; tg.disabled=true;
+      window.API.priceLists.update(id, { is_active:to }).then(function(){ window.toast('Сохранено','success'); var x=priceLists.filter(function(p){return String(p.id)===String(id);})[0]; if(x) x.is_active=to; renderPl(); })
+      .catch(function(err){ tg.disabled=false; window.toast(errMsg(err),'error'); }); return; }
+    var del=e.target.closest('button[data-del]');
+    if(del){ if(!confirm('Удалить прайс-лист? Позиции будут удалены.')) return; var id=del.getAttribute('data-del'); del.disabled=true;
+      window.API.priceLists.remove(id).then(function(){ window.toast('Прайс-лист удалён','success'); priceLists=priceLists.filter(function(p){return String(p.id)!==String(id);}); renderPl(); fillPtPricelist(); if(String(curPlId)===String(id)) closeItems(); })
+      .catch(function(err){ del.disabled=false; window.toast(err.status===403?'Только администратор':errMsg(err),'error'); }); return; }
+  });
+
+  /* ---------- редактор позиций ---------- */
+  var itemsCard=document.getElementById('itemsCard');
+  var itemRows=document.getElementById('itemRows');
+  var itemsTitle=document.getElementById('itemsTitle');
+  function renderItems(){
+    if(!curItems.length){ itemRows.innerHTML='<tr><td colspan="3" class="t-muted">Позиций нет.</td></tr>'; return; }
+    itemRows.innerHTML=curItems.map(function(it,idx){
+      return '<tr><td>'+esc(serviceName(it.service_id))+'</td><td class="t-mono">'+fmt(it.price)+'</td><td><button class="btn btn-sm btn-danger" data-rmidx="'+idx+'">Убрать</button></td></tr>';
+    }).join('');
+  }
+  function openItems(id){
+    window.API.priceLists.get(id).then(function(pl){
+      curPlId=pl.id;
+      curItems=(pl.items||[]).map(function(i){ return { service_id:i.service_id, price:i.price }; });
+      itemsTitle.textContent='Позиции: '+pl.name;
+      renderItems();
+      itemsCard.style.display='';
+      itemsCard.scrollIntoView({ behavior:'smooth', block:'start' });
+    }).catch(function(err){ window.toast(errMsg(err),'error'); });
+  }
+  function closeItems(){ itemsCard.style.display='none'; curPlId=null; curItems=[]; }
+  document.getElementById('itemsClose').addEventListener('click', closeItems);
+  itemRows.addEventListener('click', function(e){
+    var rm=e.target.closest('button[data-rmidx]');
+    if(rm){ var idx=Number(rm.getAttribute('data-rmidx')); curItems.splice(idx,1); renderItems(); }
+  });
+  document.getElementById('itemForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var sv=document.getElementById('it-service').value;
+    var price=parseFloat(document.getElementById('it-price').value);
+    if(!sv){ window.toast('Выберите услугу','error'); return; }
+    if(isNaN(price)||price<0){ window.toast('Некорректная цена','error'); return; }
+    var sid=Number(sv);
+    var ex=curItems.filter(function(i){return i.service_id===sid;})[0];
+    if(ex){ ex.price=price; } else { curItems.push({ service_id:sid, price:price }); }
+    renderItems();
+    document.getElementById('it-price').value='0';
+  });
+  document.getElementById('itemsSave').addEventListener('click', function(){
+    if(curPlId===null) return;
+    var btn=this; btn.disabled=true;
+    window.API.priceLists.setItems(curPlId, curItems).then(function(){ window.toast('Позиции сохранены','success'); btn.disabled=false; loadPl(); })
+    .catch(function(err){ btn.disabled=false; window.toast(errMsg(err),'error'); });
+  });
+
+  /* ---------- партнёрские условия ---------- */
+  var ptPartner=document.getElementById('pt-partner');
+  var ptPricelist=document.getElementById('pt-pricelist');
+  var termRows=document.getElementById('termRows');
+
+  function fillPtPricelist(){
+    var cur=ptPricelist.value;
+    var opts='<option value="">— без прайс-листа —</option>';
+    opts+=priceLists.map(function(pl){ return '<option value="'+pl.id+'">'+esc(pl.code)+' — '+esc(pl.name)+'</option>'; }).join('');
+    ptPricelist.innerHTML=opts;
+    if(cur) ptPricelist.value=cur;
+  }
+  function selectPartnerPriceList(){
+    var pid=ptPartner.value; if(!pid) return;
+    var p=partnersList.filter(function(x){return String(x.id)===String(pid);})[0];
+    ptPricelist.value = (p && p.price_list_id!=null) ? String(p.price_list_id) : '';
+  }
+  function renderTerms(list){
+    if(!list||!list.length){ termRows.innerHTML='<tr><td colspan="5" class="t-muted">Условий нет.</td></tr>'; return; }
+    termRows.innerHTML=list.map(function(t){
+      return '<tr><td class="t-mono">'+esc(t.discount_pct)+'</td><td class="t-mono">'+esc(t.commission_pct)+'</td><td class="t-mono">'+esc(t.priority)+'</td><td>'+esc(t.notes||'—')+'</td><td><button class="btn btn-sm btn-danger" data-term="'+t.id+'">Удалить</button></td></tr>';
+    }).join('');
+  }
+  function loadTerms(){
+    var pid=ptPartner.value;
+    if(!pid){ termRows.innerHTML='<tr><td colspan="5" class="t-muted">Выберите партнёра.</td></tr>'; return; }
+    termRows.innerHTML='<tr><td colspan="5" class="t-muted">Загрузка…</td></tr>';
+    window.API.partners.terms.list(pid).then(renderTerms).catch(function(err){ termRows.innerHTML='<tr><td colspan="5" class="t-muted">'+errMsg(err)+'</td></tr>'; });
+  }
+  ptPartner.addEventListener('change', function(){ selectPartnerPriceList(); loadTerms(); });
+
+  termRows.addEventListener('click', function(e){
+    var rm=e.target.closest('button[data-term]');
+    if(rm){ var tid=rm.getAttribute('data-term'); var pid=ptPartner.value; if(!confirm('Удалить условие?')) return; rm.disabled=true;
+      window.API.partners.terms.remove(pid, tid).then(function(){ window.toast('Условие удалено','success'); loadTerms(); })
+      .catch(function(err){ rm.disabled=false; window.toast(errMsg(err),'error'); }); }
+  });
+
+  document.getElementById('termForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var pid=ptPartner.value;
+    if(!pid){ window.toast('Сначала выберите партнёра','error'); return; }
+    var payload={
+      discount_pct:parseFloat(document.getElementById('tm-discount').value)||0,
+      commission_pct:parseFloat(document.getElementById('tm-commission').value)||0,
+      priority:parseInt(document.getElementById('tm-priority').value,10)||100,
+      notes:document.getElementById('tm-notes').value.trim()||null
+    };
+    var btn=document.getElementById('termBtn'); btn.disabled=true;
+    window.API.partners.terms.create(pid, payload).then(function(){ window.toast('Условие добавлено','success'); e.target.reset(); document.getElementById('tm-discount').value='0'; document.getElementById('tm-commission').value='0'; document.getElementById('tm-priority').value='100'; btn.disabled=false; loadTerms(); })
+    .catch(function(err){ btn.disabled=false; window.toast(err.status===400?((err&&err.message)||'Некорректные данные'):errMsg(err),'error'); });
+  });
+
+  document.getElementById('ptAssignBtn').addEventListener('click', function(){
+    var pid=ptPartner.value;
+    if(!pid){ window.toast('Сначала выберите партнёра','error'); return; }
+    var plv=ptPricelist.value;
+    var plId = plv ? Number(plv) : null;
+    var btn=this; btn.disabled=true;
+    window.API.partners.setPriceList(pid, plId).then(function(p){ window.toast('Прайс-лист назначен','success'); btn.disabled=false;
+      var x=partnersList.filter(function(z){return String(z.id)===String(pid);})[0]; if(x) x.price_list_id=(p&&p.price_list_id!=null)?p.price_list_id:plId; })
+    .catch(function(err){ btn.disabled=false; window.toast(err.status===400?((err&&err.message)||'Некорректные данные'):errMsg(err),'error'); });
+  });
+
+  /* ---------- инициализация ---------- */
+  function fillPartnerSelects(){
+    var plOpts=partnersList.map(function(p){ return '<option value="'+p.id+'">'+esc(p.org_name)+'</option>'; }).join('');
+    document.getElementById('pl-partner').innerHTML='<option value="">— выберите —</option>'+plOpts;
+    ptPartner.innerHTML='<option value="">— выберите —</option>'+plOpts;
+  }
+  function fillServiceSelect(){
+    document.getElementById('it-service').innerHTML='<option value="">— выберите —</option>'+servicesList.map(function(s){ return '<option value="'+s.id+'">'+esc(s.name)+'</option>'; }).join('');
+  }
+
+  window.API.partners.list().then(function(list){ partnersList=list||[]; fillPartnerSelects(); }).catch(function(){});
+  window.API.services.list(true).then(function(list){ servicesList=list||[]; fillServiceSelect(); }).catch(function(){});
+  loadPl();
+})();
+</script>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

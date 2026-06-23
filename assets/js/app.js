@@ -31,7 +31,7 @@
       { id:'order-create',  label:'Оформить заказ', href:'client/order-create.html', ic:'➕' },
       { id:'documents',     label:'Документы',      href:'client/documents.html',    ic:'📄' },
       { id:'payments',      label:'Платежи',        href:'client/payments.html',     ic:'💳' },
-      { id:'messages',      label:'Сообщения',      href:'client/messages.html',     ic:'💬' },
+      { id:'messages',      label:'Сообщения',     href:'client/messages.html',     ic:'💬' },
       { id:'profile',       label:'Профиль',        href:'client/profile.html',      ic:'👤' }
     ],
     staff: [
@@ -54,6 +54,7 @@
       { id:'users',        label:'Пользователи', href:'admin/users.html',        ic:'👥' },
       { id:'roles',        label:'Роли и права', href:'admin/roles.html',        ic:'🔐' },
       { id:'dictionaries', label:'Справочники',  href:'admin/dictionaries.html', ic:'📚' },
+      { id:'pricing',      label:'Прайс-листы',  href:'admin/pricing.html',      ic:'🏷️' },
       { id:'audit',        label:'Аудит лог',    href:'admin/audit.html',        ic:'🧾' },
       { id:'settings',     label:'Настройки',    href:'admin/settings.html',     ic:'⚙️' }
     ]
