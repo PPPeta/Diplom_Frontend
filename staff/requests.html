@@ -19,10 +19,39 @@
       <option value="cancelled">Отклонена</option>
     </select>
   </div>
+
+  <div class="card" id="order-panel" style="margin-bottom:16px; display:none">
+    <div class="card-h">
+      <h3 style="margin:0">Создать заказ из заявки</h3>
+      <button class="btn btn-sm" id="order-cancel" type="button">Закрыть</button>
+    </div>
+    <div class="t-muted" style="margin-bottom:10px" id="order-hint">—</div>
+
+    <form class="form" id="order-form" autocomplete="off">
+      <div class="form-row">
+        <div class="field">
+          <label>Услуга</label>
+          <select class="input" id="order-service" required>
+            <option value="">Загрузка…</option>
+          </select>
+          <div class="hint">В заявке нет корзины, поэтому выбираем услугу вручную.</div>
+        </div>
+        <div class="field">
+          <label>Кол-во</label>
+          <input class="input" id="order-qty" type="number" min="1" value="1" required>
+        </div>
+      </div>
+      <div class="quick-actions">
+        <button class="btn btn-primary" type="submit" id="order-submit">Создать заказ</button>
+        <button class="btn" type="button" id="order-mark">Пометить как «В работе»</button>
+      </div>
+    </form>
+  </div>
+
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Дата</th><th>Клиент</th><th>Контакты</th><th>Сообщение</th><th>Источник</th><th>Статус</th></tr></thead>
-      <tbody id="rows"><tr><td colspan="6" class="t-muted">Загрузка…</td></tr></tbody>
+      <thead><tr><th>Дата</th><th>Клиент</th><th>Контакты</th><th>Сообщение</th><th>Источник</th><th>Статус</th><th></th></tr></thead>
+      <tbody id="rows"><tr><td colspan="7" class="t-muted">Загрузка…</td></tr></tbody>
     </table>
   </div>
 </main>
@@ -35,13 +64,32 @@
   var sf = document.getElementById('status-filter');
   var esc = window.API.escapeHtml;
   var all = [];
+
+  var panel = document.getElementById('order-panel');
+  var hint = document.getElementById('order-hint');
+  var btnCancel = document.getElementById('order-cancel');
+  var form = document.getElementById('order-form');
+  var serviceSel = document.getElementById('order-service');
+  var qtyInp = document.getElementById('order-qty');
+  var btnSubmit = document.getElementById('order-submit');
+  var btnMark = document.getElementById('order-mark');
+
+  var services = []; // [{id,name}]
+  var activeReq = null; // request object
+
   function fmtDate(iso){ if(!iso) return '—'; var d=new Date(iso); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
   function contacts(r){ var parts=[]; if(r.phone) parts.push(esc(r.phone)); if(r.email) parts.push(esc(r.email)); return parts.join('<br>') || '—'; }
+
   function statusSelect(r){
     var cur = RS[r.status] ? r.status : 'new';
     return '<select class="input" data-req="'+r.id+'" data-prev="'+cur+'" style="padding:4px 8px">' +
       Object.keys(RS).map(function(k){ return '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+RS[k].l+'</option>'; }).join('') + '</select>';
   }
+
+  function pickBtn(r){
+    return '<button class="btn btn-sm" data-mk="'+r.id+'">Создать заказ</button>';
+  }
+
   function render(){
     var term=(q.value||'').toLowerCase(); var st=sf.value;
     var list=all.filter(function(r){
@@ -49,23 +97,153 @@
       var okT=!term || hay.indexOf(term)>=0;
       var okS=!st || r.status===st; return okT&&okS;
     });
-    if(!list.length){ rows.innerHTML='<tr><td colspan="6" class="t-muted">Заявок нет.</td></tr>'; return; }
+
+    if(!list.length){ rows.innerHTML='<tr><td colspan="7" class="t-muted">Заявок нет.</td></tr>'; return; }
+
     rows.innerHTML=list.map(function(r){
-      return '<tr><td>'+fmtDate(r.created_at)+'</td><td class="t-strong">'+esc(r.client_name)+'</td><td>'+contacts(r)+'</td><td>'+(r.message?esc(r.message):'—')+'</td><td>'+esc(r.source||'site')+'</td><td>'+statusSelect(r)+'</td></tr>';
+      var msg = (r.message?esc(r.message):'—');
+      return '<tr>'+
+        '<td>'+fmtDate(r.created_at)+'</td>'+
+        '<td class="t-strong">'+esc(r.client_name)+'</td>'+
+        '<td>'+contacts(r)+'</td>'+
+        '<td>'+msg+'</td>'+
+        '<td>'+esc(r.source||'site')+'</td>'+
+        '<td>'+statusSelect(r)+'</td>'+
+        '<td style="text-align:right">'+pickBtn(r)+'</td>'+
+      '</tr>';
     }).join('');
   }
+
+  function ensureServices(){
+    if (services.length) return Promise.resolve(services);
+    return window.API.services.list(true).then(function(list){
+      services = (list||[]).map(function(s){ return { id:s.id, name:s.name }; });
+      return services;
+    });
+  }
+
+  function fillServices(){
+    if(!services.length){
+      serviceSel.innerHTML = '<option value="">Нет услуг</option>';
+      return;
+    }
+    serviceSel.innerHTML = '<option value="">Выберите услугу…</option>' +
+      services.map(function(s){ return '<option value="'+s.id+'">'+esc(s.name)+' (#'+s.id+')</option>'; }).join('');
+  }
+
+  function openPanel(req){
+    activeReq = req;
+    panel.style.display = 'block';
+    qtyInp.value = 1;
+
+    var cl = esc(req.client_name);
+    var c = [];
+    if(req.phone) c.push(req.phone);
+    if(req.email) c.push(req.email);
+    var contactsTxt = c.length ? esc(c.join(' / ')) : '—';
+    hint.innerHTML = 'Заявка #' + req.id + ' · ' + cl + ' · ' + contactsTxt + ' · ' + fmtDate(req.created_at);
+
+    ensureServices().then(function(){ fillServices(); }).catch(function(){
+      serviceSel.innerHTML = '<option value="">Не удалось загрузить услуги</option>';
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function closePanel(){
+    activeReq = null;
+    panel.style.display = 'none';
+  }
+
+  function setReqStatus(id, st){
+    return window.API.request('/requests/'+id, { method:'PATCH', json:{ status: st } })
+      .then(function(updated){
+        var it=all.filter(function(x){return String(x.id)===String(id);})[0];
+        if(it) it.status = st;
+        render();
+        return updated;
+      });
+  }
+
+  // --- Table handlers ---
   rows.addEventListener('change', function(e){
-    var sel=e.target.closest('select[data-req]'); if(!sel) return;
+    var sel=e.target.closest('select[data-req]');
+    if(!sel) return;
+
     var id=sel.getAttribute('data-req'), st=sel.value, prev=sel.getAttribute('data-prev');
     sel.disabled=true;
-    window.API.request('/requests/'+id, { method:'PATCH', json:{ status: st } })
-      .then(function(){ window.toast('Статус заявки обновлён','success'); sel.setAttribute('data-prev',st); sel.disabled=false; var it=all.filter(function(x){return String(x.id)===String(id);})[0]; if(it) it.status=st; })
+    setReqStatus(id, st)
+      .then(function(){ window.toast('Статус заявки обновлён','success'); sel.setAttribute('data-prev',st); sel.disabled=false; })
       .catch(function(err){ window.toast('Ошибка: '+err.message,'error'); sel.value=prev; sel.disabled=false; });
   });
+
+  rows.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('button[data-mk]');
+    if(!btn) return;
+    e.preventDefault();
+
+    var id = btn.getAttribute('data-mk');
+    var req = all.filter(function(x){ return String(x.id)===String(id); })[0];
+    if(!req){ window.toast('Заявка не найдена','error'); return; }
+
+    // сразу переведём в in_progress чтобы не потерять
+    setReqStatus(id, 'in_progress').catch(function(){});
+    openPanel(req);
+  });
+
+  // --- Panel handlers ---
+  btnCancel.addEventListener('click', closePanel);
+
+  btnMark.addEventListener('click', function(){
+    if(!activeReq) return;
+    btnMark.disabled = true;
+    setReqStatus(activeReq.id, 'in_progress')
+      .then(function(){ window.toast('Помечено как «В работе»','success'); btnMark.disabled = false; })
+      .catch(function(err){ window.toast('Ошибка: '+err.message,'error'); btnMark.disabled = false; });
+  });
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!activeReq){ window.toast('Заявка не выбрана','error'); return; }
+
+    var serviceId = Number(serviceSel.value);
+    var qty = Number(qtyInp.value);
+    if(!serviceId || isNaN(serviceId)) { window.toast('Выбери услугу','error'); return; }
+    if(!qty || qty < 1) { window.toast('Кол-во должно быть >= 1','error'); return; }
+
+    var clientRef = activeReq.client_name;
+    var c = [];
+    if(activeReq.phone) c.push('тел: '+activeReq.phone);
+    if(activeReq.email) c.push('email: '+activeReq.email);
+    if(activeReq.message) c.push('сообщ: '+activeReq.message);
+    clientRef += c.length ? (' | ' + c.join(' | ')) : '';
+
+    var payload = {
+      client_ref: clientRef,
+      items: [{ service_id: serviceId, qty: qty }]
+    };
+
+    btnSubmit.disabled = true;
+
+    window.API.orders.create(payload).then(function(order){
+      window.toast('Заказ создан: '+order.number,'success');
+      return setReqStatus(activeReq.id, 'done').then(function(){
+        // открываем карточку заказа
+        location.href = 'order.html?id=' + encodeURIComponent(order.id);
+      });
+    }).catch(function(err){
+      window.toast('Ошибка: '+err.message,'error');
+      btnSubmit.disabled = false;
+    });
+  });
+
+  // filters
   q.addEventListener('input', render);
   sf.addEventListener('change', render);
+
+  // boot
   window.API.requests.list().then(function(list){ all=list||[]; render(); })
-  .catch(function(err){ rows.innerHTML='<tr><td colspan="6" class="t-muted">'+(err.status===401?'Требуется вход менеджера.':'Не удалось загрузить заявки.')+'</td></tr>'; });
+    .catch(function(err){ rows.innerHTML='<tr><td colspan="7" class="t-muted">'+(err.status===401?'Требуется вход менеджера.':'Не удалось загрузить заявки.')+'</td></tr>'; });
 })();
 </script>
 <script src="../assets/js/app.js"></script>
