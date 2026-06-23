@@ -79,7 +79,7 @@ p{margin:0 0 1em}
 .role-switch:hover{border-color:var(--gold-soft);background:var(--surface-2)}
 
 /* ---------- Buttons ---------- */
-.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:10px 17px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;transition:transform .2s cubic-bezier(.2,.7,.2,1),background .15s,border-color .15s,box-shadow .15s;font-family:inherit;white-space:nowrap;overflow:hidden}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:12px 20px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;transition:transform .2s cubic-bezier(.2,.7,.2,1),background .15s,border-color .15s,box-shadow .15s;font-family:inherit;white-space:nowrap;overflow:hidden}
 .btn:hover{background:var(--surface-2);border-color:var(--border-strong)}
 .btn:active{transform:scale(.97)}
 .btn-primary{background:var(--primary);border-color:var(--primary);color:#f5f1e8;box-shadow:0 8px 20px -8px rgba(46,74,64,.6)}
@@ -91,7 +91,7 @@ p{margin:0 0 1em}
 .btn-ghost:hover{background:var(--primary-50);border-color:transparent}
 .btn-danger{color:var(--red);border-color:#e3c4c1;background:var(--surface)}
 .btn-danger:hover{background:var(--red-bg);border-color:#d8b3af}
-.btn-sm{padding:7px 13px;font-size:13px;border-radius:10px}
+.btn-sm{padding:9px 15px;font-size:13px;border-radius:10px}
 .btn-block{width:100%}
 
 /* ---------- Layout shell ---------- */
@@ -183,7 +183,7 @@ tbody tr:hover{background:var(--gold-50)}
 .search .input{padding-left:38px;min-width:240px}
 .search::before{content:'\1F50D';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.55}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{padding:7px 15px;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--surface);font-size:13px;font-weight:500;cursor:pointer;transition:transform .15s,background .15s,border-color .15s,color .15s}
+.chip{padding:9px 16px;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--surface);font-size:13px;font-weight:500;cursor:pointer;transition:transform .15s,background .15s,border-color .15s,color .15s}
 .chip:hover{border-color:var(--gold-soft);background:var(--surface-2);transform:translateY(-1px)}
 .chip.active{background:var(--primary);border-color:var(--primary);color:#f5f1e8;box-shadow:0 5px 14px -5px rgba(46,74,64,.55)}
 
