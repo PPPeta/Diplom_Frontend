@@ -28,18 +28,10 @@
     <div class="t-muted" style="margin-bottom:10px" id="order-hint">—</div>
 
     <form class="form" id="order-form" autocomplete="off">
-      <div class="form-row">
-        <div class="field">
-          <label>Услуга</label>
-          <select class="input" id="order-service" required>
-            <option value="">Загрузка…</option>
-          </select>
-          <div class="hint">В заявке нет корзины, поэтому выбираем услугу вручную.</div>
-        </div>
-        <div class="field">
-          <label>Кол-во</label>
-          <input class="input" id="order-qty" type="number" min="1" value="1" required>
-        </div>
+      <div id="order-items"></div>
+      <div class="hint" id="order-items-hint" style="margin-bottom:10px">Позиции распознаны из текста заявки — проверьте и при необходимости измените.</div>
+      <div class="quick-actions" style="margin-bottom:10px">
+        <button class="btn btn-sm" type="button" id="order-add-item">+ Добавить услугу</button>
       </div>
       <div class="quick-actions">
         <button class="btn btn-primary" type="submit" id="order-submit">Создать заказ</button>
@@ -69,8 +61,8 @@
   var hint = document.getElementById('order-hint');
   var btnCancel = document.getElementById('order-cancel');
   var form = document.getElementById('order-form');
-  var serviceSel = document.getElementById('order-service');
-  var qtyInp = document.getElementById('order-qty');
+  var itemsBox = document.getElementById('order-items');
+  var btnAddItem = document.getElementById('order-add-item');
   var btnSubmit = document.getElementById('order-submit');
   var btnMark = document.getElementById('order-mark');
 
@@ -122,19 +114,57 @@
     });
   }
 
-  function fillServices(){
-    if(!services.length){
-      serviceSel.innerHTML = '<option value="">Нет услуг</option>';
-      return;
-    }
-    serviceSel.innerHTML = '<option value="">Выберите услугу…</option>' +
-      services.map(function(s){ return '<option value="'+s.id+'">'+esc(s.name)+' (#'+s.id+')</option>'; }).join('');
+  function serviceOptions(selId){
+    var opts = '<option value="">Выберите услугу…</option>';
+    return opts + services.map(function(s){
+      return '<option value="'+s.id+'"'+(String(s.id)===String(selId)?' selected':'')+'>'+esc(s.name)+' (#'+s.id+')</option>';
+    }).join('');
+  }
+
+  function addItemRow(serviceId, qty){
+    var row = document.createElement('div');
+    row.className = 'form-row order-item-row';
+    var sel = services.length
+      ? '<select class="input it-service" required>'+serviceOptions(serviceId)+'</select>'
+      : '<select class="input it-service" required><option value="">Нет услуг</option></select>';
+    row.innerHTML =
+      '<div class="field">'+
+        '<label>Услуга</label>'+ sel +
+      '</div>'+
+      '<div class="field" style="max-width:140px">'+
+        '<label>Кол-во</label>'+
+        '<input class="input it-qty" type="number" min="1" value="'+((qty&&qty>0)?qty:1)+'" required>'+
+      '</div>'+
+      '<div class="field" style="max-width:64px; align-self:flex-end">'+
+        '<label>&nbsp;</label>'+
+        '<button class="btn it-remove" type="button" title="Убрать позицию">✕</button>'+
+      '</div>';
+    itemsBox.appendChild(row);
+  }
+
+  // Разбираем строку вида "Услуги: Бальзамирование ×1; Гроб премиум ×1 | Желаемая дата: ..."
+  function parseServicesFromMessage(msg){
+    if(!msg) return [];
+    var m = String(msg);
+    var idx = m.indexOf('Услуги:');
+    if(idx < 0) return [];
+    var seg = m.slice(idx + 'Услуги:'.length);
+    var pipe = seg.indexOf('|');
+    if(pipe >= 0) seg = seg.slice(0, pipe);
+    var out = [];
+    seg.split(';').forEach(function(part){
+      part = part.trim();
+      if(!part) return;
+      var mm = part.match(/^(.+?)\s*[×xX*]\s*(\d+)\s*$/);
+      if(mm){ out.push({ name: mm[1].trim(), qty: Number(mm[2])||1 }); }
+      else { out.push({ name: part, qty: 1 }); }
+    });
+    return out;
   }
 
   function openPanel(req){
     activeReq = req;
     panel.style.display = 'block';
-    qtyInp.value = 1;
 
     var cl = esc(req.client_name);
     var c = [];
@@ -143,8 +173,22 @@
     var contactsTxt = c.length ? esc(c.join(' / ')) : '—';
     hint.innerHTML = 'Заявка #' + req.id + ' · ' + cl + ' · ' + contactsTxt + ' · ' + fmtDate(req.created_at);
 
-    ensureServices().then(function(){ fillServices(); }).catch(function(){
-      serviceSel.innerHTML = '<option value="">Не удалось загрузить услуги</option>';
+    itemsBox.innerHTML = '<div class="t-muted">Загрузка услуг…</div>';
+
+    ensureServices().then(function(){
+      itemsBox.innerHTML = '';
+      var byName = {};
+      services.forEach(function(s){ byName[String(s.name).trim().toLowerCase()] = s.id; });
+      var parsed = parseServicesFromMessage(req.message);
+      var added = 0;
+      parsed.forEach(function(p){
+        var id = byName[p.name.trim().toLowerCase()];
+        addItemRow(id || '', p.qty);
+        added++;
+      });
+      if(!added) addItemRow('', 1);
+    }).catch(function(){
+      itemsBox.innerHTML = '<div class="t-muted">Не удалось загрузить услуги</div>';
     });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -194,6 +238,21 @@
   // --- Panel handlers ---
   btnCancel.addEventListener('click', closePanel);
 
+  btnAddItem.addEventListener('click', function(){
+    if(!services.length){ window.toast('Услуги ещё не загружены','error'); return; }
+    addItemRow('', 1);
+  });
+
+  itemsBox.addEventListener('click', function(e){
+    var rm = e.target.closest && e.target.closest('.it-remove');
+    if(!rm) return;
+    e.preventDefault();
+    var allRows = itemsBox.querySelectorAll('.order-item-row');
+    if(allRows.length <= 1){ window.toast('Нужна хотя бы одна позиция','error'); return; }
+    var row = rm.closest('.order-item-row');
+    if(row) row.parentNode.removeChild(row);
+  });
+
   btnMark.addEventListener('click', function(){
     if(!activeReq) return;
     btnMark.disabled = true;
@@ -206,29 +265,30 @@
     e.preventDefault();
     if(!activeReq){ window.toast('Заявка не выбрана','error'); return; }
 
-    var serviceId = Number(serviceSel.value);
-    var qty = Number(qtyInp.value);
-    if(!serviceId || isNaN(serviceId)) { window.toast('Выбери услугу','error'); return; }
-    if(!qty || qty < 1) { window.toast('Кол-во должно быть >= 1','error'); return; }
+    var items = [];
+    var bad = false;
+    itemsBox.querySelectorAll('.order-item-row').forEach(function(r){
+      var sid = Number(r.querySelector('.it-service').value);
+      var qv = Number(r.querySelector('.it-qty').value);
+      if(!sid || isNaN(sid)) return; // пропускаем незаполненные строки
+      if(!qv || qv < 1){ bad = true; return; }
+      items.push({ service_id: sid, qty: qv });
+    });
 
-    var clientRef = activeReq.client_name;
-    var c = [];
-    if(activeReq.phone) c.push('тел: '+activeReq.phone);
-    if(activeReq.email) c.push('email: '+activeReq.email);
-    if(activeReq.message) c.push('сообщ: '+activeReq.message);
-    clientRef += c.length ? (' | ' + c.join(' | ')) : '';
+    if(bad){ window.toast('Кол-во должно быть >= 1','error'); return; }
+    if(!items.length){ window.toast('Добавьте хотя бы одну услугу','error'); return; }
 
-    var payload = {
-      client_ref: clientRef,
-      items: [{ service_id: serviceId, qty: qty }]
-    };
+    // Короткий client_ref: имя + телефон, без полного текста заявки.
+    var clientRef = activeReq.client_name || ('Заявка #' + activeReq.id);
+    if(activeReq.phone) clientRef += ' · ' + activeReq.phone;
+
+    var payload = { client_ref: clientRef, items: items };
 
     btnSubmit.disabled = true;
 
     window.API.orders.create(payload).then(function(order){
       window.toast('Заказ создан: '+order.number,'success');
       return setReqStatus(activeReq.id, 'done').then(function(){
-        // открываем карточку заказа
         location.href = 'order.html?id=' + encodeURIComponent(order.id);
       });
     }).catch(function(err){
