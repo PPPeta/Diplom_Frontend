@@ -282,7 +282,32 @@
   };
   var partners = {
     list: function () { return request("/partners"); },
-    get: function (id) { return request("/partners/" + id); }
+    get: function (id) { return request("/partners/" + id); },
+    /* Партнёрские условия (скидки/комиссии). */
+    terms: {
+      list: function (partnerId) { return request("/partners/" + partnerId + "/terms"); },
+      create: function (partnerId, payload) { return request("/partners/" + partnerId + "/terms", { method: "POST", json: payload }); },
+      update: function (partnerId, termId, payload) { return request("/partners/" + partnerId + "/terms/" + termId, { method: "PATCH", json: payload }); },
+      remove: function (partnerId, termId) { return request("/partners/" + partnerId + "/terms/" + termId, { method: "DELETE" }); }
+    },
+    /* Назначить/снять прайс-лист партнёра (null — снять). */
+    setPriceList: function (partnerId, priceListId) {
+      return request("/partners/" + partnerId + "/price-list", { method: "PATCH", json: { price_list_id: priceListId } });
+    }
+  };
+  /* Прайс-листы (base | partner | promo) и их позиции. */
+  var priceLists = {
+    list: function (q) {
+      var qs = [];
+      if (q && q.kind) qs.push("kind=" + encodeURIComponent(q.kind));
+      if (q && q.partner_id != null) qs.push("partner_id=" + encodeURIComponent(q.partner_id));
+      return request("/price-lists" + (qs.length ? "?" + qs.join("&") : ""));
+    },
+    get: function (id) { return request("/price-lists/" + id); },
+    create: function (payload) { return request("/price-lists", { method: "POST", json: payload }); },
+    update: function (id, payload) { return request("/price-lists/" + id, { method: "PATCH", json: payload }); },
+    setItems: function (id, items) { return request("/price-lists/" + id + "/items", { method: "PUT", json: items }); },
+    remove: function (id) { return request("/price-lists/" + id, { method: "DELETE" }); }
   };
 
   /* ---------- helpers ---------- */
@@ -335,6 +360,7 @@
     users: users,
     roles: roles,
     partners: partners,
+    priceLists: priceLists,
     fmtPrice: fmtPrice,
     escapeHtml: escapeHtml
   };
