@@ -254,7 +254,7 @@
     checkout: function (orderId) {
       return request("/payments/yookassa/checkout", { method: "POST", json: { order_id: orderId } });
     },
-    /* Опросить статус платежа в ЮKassa и обновить локальный. */
+    /* Опросить статус платежа в ЮKassa и синхронизировать локальный. */
     sync: function (id) {
       return request("/payments/" + id + "/yookassa/sync", { method: "POST" });
     }
