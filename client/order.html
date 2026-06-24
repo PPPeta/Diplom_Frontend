@@ -53,17 +53,13 @@
   var id=new URLSearchParams(location.search).get('id');
   if(!id){ document.getElementById('sub').textContent='Заказ не указан.'; return; }
   var svcMap={};
-  // Состояние заказа/оплат для управления кнопкой оплаты.
-  var orderTotal=0, orderStatus='', paidSum=0;
-  // Кнопка оплаты блокируется, если заказ закрыт/отменён ИЛИ оплачен полностью.
+  var orderTotal=0, orderStatus=null, paidSum=0;
   function updatePayBtn(){
     var payBtn=document.getElementById('pay-yk'); if(!payBtn) return;
     var note=document.getElementById('pay-note');
-    var closed=(orderStatus==='closed'||orderStatus==='cancelled');
-    var fullyPaid=(orderTotal>0 && paidSum>=orderTotal);
-    if(closed){ payBtn.disabled=true; if(note) note.textContent='Заказ '+(orderStatus==='cancelled'?'отменён':'закрыт')+'.'; }
-    else if(fullyPaid){ payBtn.disabled=true; if(note) note.textContent='Заказ оплачен.'; }
-    else { payBtn.disabled=false; if(note) note.textContent=''; }
+    if(orderStatus==='closed'||orderStatus==='cancelled'){ payBtn.disabled=true; note.textContent='Заказ '+(orderStatus==='cancelled'?'отменён':'закрыт')+'.'; return; }
+    if(orderTotal>0 && paidSum>=orderTotal){ payBtn.disabled=true; note.textContent='Заказ оплачен.'; return; }
+    payBtn.disabled=false; note.textContent='';
   }
   function renderItems(o){
     var box=document.getElementById('items');
@@ -81,8 +77,7 @@
     document.getElementById('title').innerHTML=o.number+' '+badge(o.status);
     document.getElementById('sub').textContent='Создан '+fmtDate(o.created_at);
     renderItems(o);
-    orderTotal=Number(o.total_amount)||0; orderStatus=o.status;
-    updatePayBtn();
+    orderTotal=Number(o.total_amount)||0; orderStatus=o.status; updatePayBtn();
   }).catch(function(err){ document.getElementById('sub').textContent=(err.status===404?'Заказ не найден.':(err.status===401?'Требуется вход.':'Ошибка загрузки.')); document.getElementById('items').innerHTML=''; });
 
   // --- Оплаты ---
@@ -99,9 +94,8 @@
     var box=document.getElementById('pays');
     window.API.payments.list(id).then(function(list){
       list=list||[];
-      paidSum=list.reduce(function(s,p){ return s + (p.status==='paid' ? (Number(p.amount)||0) : 0); }, 0);
+      paidSum=list.reduce(function(s,p){ return s+(p.status==='paid'?(Number(p.amount)||0):0); },0); updatePayBtn();
       box.innerHTML = list.length ? list.map(payRow).join('') : '<div class="list-row"><span class="t-muted">Платежей пока нет.</span></div>';
-      updatePayBtn();
     }).catch(function(){ box.innerHTML='<div class="list-row"><span class="t-muted">Не удалось загрузить оплаты.</span></div>'; });
   }
   document.getElementById('pays').addEventListener('click', function(e){
@@ -123,7 +117,6 @@
       btn.disabled=false; note.textContent='';
       var msg = err.status===409 ? 'Заказ уже оплачен' : (err.status===503 ? 'ЮKassa не настроена' : (err.status===400 ? 'Сумма заказа должна быть больше нуля' : (err.status===403 ? 'Нет доступа' : 'Не удалось создать платёж')));
       if(window.toast) window.toast(msg,'error');
-      if(err.status===409){ loadPays(); }
     });
   });
   loadPays();
