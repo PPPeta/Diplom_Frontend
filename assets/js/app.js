@@ -40,7 +40,6 @@
       { id:'requests',  label:'Заявки с сайта',  href:'staff/requests.html',  ic:'📨' },
       { id:'clients',   label:'Клиенты',         href:'staff/clients.html',   ic:'👥' },
       { id:'tasks',     label:'Задачи',          href:'staff/tasks.html',     ic:'✅' },
-      { id:'calendar',  label:'Календарь',       href:'staff/calendar.html',  ic:'📅' },
       { id:'documents', label:'Документы',       href:'staff/documents.html', ic:'📄' },
       { id:'payments',  label:'Платежи и счета', href:'staff/payments.html',  ic:'💰' },
       { id:'reports',   label:'Отчёты',          href:'staff/reports.html',   ic:'📈' }
