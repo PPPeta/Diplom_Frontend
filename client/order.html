@@ -53,7 +53,7 @@
   var id=new URLSearchParams(location.search).get('id');
   if(!id){ document.getElementById('sub').textContent='Заказ не указан.'; return; }
   var svcMap={};
-  // Состояние для кнопки оплаты: блокируем, если заказ закрыт/отменён или уже оплачен на полную сумму.
+  // Кнопка оплаты недоступна для закрытых/отменённых и уже полностью оплаченных заказов.
   var orderTotal=null, orderStatus=null, paidSum=0;
   function updatePayBtn(){
     var btn=document.getElementById('pay-yk'); if(!btn) return;
@@ -78,7 +78,8 @@
     document.getElementById('title').innerHTML=o.number+' '+badge(o.status);
     document.getElementById('sub').textContent='Создан '+fmtDate(o.created_at);
     renderItems(o);
-    orderTotal=Number(o.total_amount)||0; orderStatus=o.status; updatePayBtn();
+    orderTotal=Number(o.total_amount)||0; orderStatus=o.status;
+    updatePayBtn();
   }).catch(function(err){ document.getElementById('sub').textContent=(err.status===404?'Заказ не найден.':(err.status===401?'Требуется вход.':'Ошибка загрузки.')); document.getElementById('items').innerHTML=''; });
 
   // --- Оплаты ---
