@@ -4,8 +4,8 @@ services:
     image: vp-frontend
     container_name: vp-frontend
     ports:
-      # хост:5500 -> контейнер:80 (совпадает с YOOKASSA_RETURN_URL)
-      - "5500:80"
+      # хост:80 -> контейнер:80
+      - "80:80"
     extra_hosts:
       # доступ из контейнера к бэкенду, опубликованному на хосте :8000
       - "host.docker.internal:host-gateway"
