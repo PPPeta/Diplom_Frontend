@@ -53,7 +53,7 @@
   var id=new URLSearchParams(location.search).get('id');
   if(!id){ document.getElementById('sub').textContent='Заказ не указан.'; return; }
   var svcMap={};
-  // Состояние кнопки оплаты: блокируем для закрытых/отменённых и при полной оплате.
+  // Кнопка оплаты недоступна для закрытых/отменённых заказов и при полной оплате.
   var orderTotal=null, orderStatus=null, paidSum=0;
   function updatePayBtn(){
     var btn=document.getElementById('pay-yk'); if(!btn) return;
