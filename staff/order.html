@@ -110,7 +110,7 @@
     document.getElementById('actions').innerHTML=''; document.getElementById('items').innerHTML=''; document.getElementById('info').innerHTML='';
   });
 
-  // --- Оплаты (менеджер только отслеживает статус; оплату инициирует клиент) ---
+  // --- Оплаты (менеджер только просматривает и проверяет статус) ---
   function payRow(p){
     var prov = p.provider==='yookassa' ? ' <span class="t-muted">· ЮKassa</span>' : '';
     var act='';
