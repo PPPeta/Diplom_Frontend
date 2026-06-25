@@ -198,7 +198,17 @@ tbody tr:hover{background:var(--gold-50)}
 .field textarea{min-height:98px;resize:vertical}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .checkbox{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted)}
-.checkbox input{width:18px;height:18px;margin-top:1px;accent-color:var(--primary)}
+.checkbox input{margin-top:1px}
+
+/* ---------- Custom checkbox (larger hit target + refined look) ---------- */
+input[type="checkbox"]{appearance:none;-webkit-appearance:none;-moz-appearance:none;flex:none;width:22px;height:22px;margin:0;border:1.5px solid var(--border-strong);border-radius:7px;background:var(--surface);cursor:pointer;display:inline-grid;place-content:center;vertical-align:middle;transition:background .15s,border-color .15s,box-shadow .15s,transform .1s}
+input[type="checkbox"]::before{content:"";width:6px;height:11px;margin-top:-2px;border:solid #f5f1e8;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) scale(0);transform-origin:center;transition:transform .15s cubic-bezier(.2,.8,.2,1)}
+input[type="checkbox"]:hover{border-color:var(--gold);box-shadow:var(--shadow-sm)}
+input[type="checkbox"]:checked{background:var(--primary);border-color:var(--primary)}
+input[type="checkbox"]:checked::before{transform:rotate(45deg) scale(1)}
+input[type="checkbox"]:active{transform:scale(.92)}
+input[type="checkbox"]:focus-visible{box-shadow:var(--ring)}
+input[type="checkbox"]:disabled{opacity:.5;cursor:not-allowed}
 
 /* ---------- Hero ---------- */
 .hero{position:relative;background:radial-gradient(1100px 480px at 84% -16%,var(--gold-100),transparent 60%),radial-gradient(720px 360px at -4% 4%,var(--primary-50),transparent 58%),var(--surface);border-bottom:1px solid var(--border);overflow:hidden}
