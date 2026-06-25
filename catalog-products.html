@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Каталог товаров — Сервис-Заказы</title>
+<title>Каталог товаров — Вечная Память</title>
 <link rel="stylesheet" href="assets/css/styles.css">
 <link rel="stylesheet" href="assets/css/cards.css">
 </head>
@@ -12,20 +12,104 @@
   <div class="breadcrumbs"><a href="index.html">Главная</a> / Каталог товаров</div>
   <h1 class="page-title">Каталог товаров</h1>
   <p class="page-sub">Ритуальная атрибутика и сопутствующие товары.</p>
+
   <div class="filters mt">
-    <div class="chips"><span class="chip active">Все</span><span class="chip">Венки и цветы</span><span class="chip">Атрибутика</span><span class="chip">Памятные</span></div>
-    <div class="search" style="margin-left:auto"><input class="input" placeholder="Поиск товара…"></div>
+    <div class="chips" id="prod-chips">
+      <span class="chip active" data-cat="">Все</span>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="prod-sort" class="input" style="width:auto" aria-label="Сортировка">
+        <option value="">Сортировка: по умолчанию</option>
+        <option value="price-asc">Цена: по возрастанию</option>
+        <option value="price-desc">Цена: по убыванию</option>
+        <option value="name-asc">Название: А–Я</option>
+      </select>
+      <div class="search"><input id="prod-search" class="input" placeholder="Поиск товара…"></div>
+    </div>
   </div>
-  <div class="grid g-3 mt">
-    <article class="svc"><div class="svc-head"><span class="svc-ico">💐</span><span class="svc-tag">Венки и цветы</span></div><div class="svc-body"><h4>Траурный венок</h4><p>Живые или искусственные цветы, оформление на заказ.</p></div><div class="foot"><span class="price">от 2 500 ₽</span><button class="btn btn-sm btn-primary cart-add" data-code="PROD-WREATH" data-name="Траурный венок" data-price="2500">В корзину</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">🕯️</span><span class="svc-tag">Атрибутика</span></div><div class="svc-body"><h4>Памятные свечи</h4><p>Набор поминальных свечей.</p></div><div class="foot"><span class="price">от 600 ₽</span><button class="btn btn-sm btn-primary cart-add" data-code="PROD-CANDLES" data-name="Памятные свечи" data-price="600">В корзину</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">🖼️</span><span class="svc-tag">Памятные</span></div><div class="svc-body"><h4>Фоторамка</h4><p>Оформление памятного портрета.</p></div><div class="foot"><span class="price">от 1 200 ₽</span><button class="btn btn-sm btn-primary cart-add" data-code="PROD-PHOTOFRAME" data-name="Фоторамка" data-price="1200">В корзину</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">🌿</span><span class="svc-tag">Венки и цветы</span></div><div class="svc-body"><h4>Корзина цветов</h4><p>Композиция из живых цветов.</p></div><div class="foot"><span class="price">от 3 200 ₽</span><button class="btn btn-sm btn-primary cart-add" data-code="PROD-FLOWERBASKET" data-name="Корзина цветов" data-price="3200">В корзину</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">⚱️</span><span class="svc-tag">Атрибутика</span></div><div class="svc-body"><h4>Памятная урна</h4><p>Различные материалы и оформление.</p></div><div class="foot"><span class="price">по запросу</span><button class="btn btn-sm btn-primary cart-add" data-code="PROD-URN" data-name="Памятная урна" data-price="0">В корзину</button></div></article>
-    <article class="svc"><div class="svc-head"><span class="svc-ico">🪦</span><span class="svc-tag">Памятные</span></div><div class="svc-body"><h4>Памятная табличка</h4><p>Гравировка по индивидуальному макету.</p></div><div class="foot"><span class="price">от 1 800 ₽</span><button class="btn btn-sm btn-primary cart-add" data-code="PROD-PLAQUE" data-name="Памятная табличка" data-price="1800">В корзину</button></div></article>
-  </div>
+
+  <div class="grid g-3 mt" id="prod-grid"></div>
+
   <div class="cta-row mt" style="justify-content:center"><a class="btn btn-primary" href="cart.html">Перейти в корзину</a></div>
 </div>
+
+<script>
+(function(){
+  var PRODUCTS = [
+    { code:'PROD-WREATH',      name:'Траурный венок',     cat:'Венки и цветы', ico:'💐',  price:2500, priceLabel:'от 2 500 ₽', desc:'Живые или искусственные цветы, оформление на заказ.' },
+    { code:'PROD-CANDLES',     name:'Памятные свечи',     cat:'Атрибутика',    ico:'🕯️', price:600,  priceLabel:'от 600 ₽',   desc:'Набор поминальных свечей.' },
+    { code:'PROD-PHOTOFRAME',  name:'Фоторамка',          cat:'Памятные',      ico:'🖼️', price:1200, priceLabel:'от 1 200 ₽', desc:'Оформление памятного портрета.' },
+    { code:'PROD-FLOWERBASKET',name:'Корзина цветов',     cat:'Венки и цветы', ico:'🌿',  price:3200, priceLabel:'от 3 200 ₽', desc:'Композиция из живых цветов.' },
+    { code:'PROD-URN',         name:'Памятная урна',      cat:'Атрибутика',    ico:'⚱️', price:0,    priceLabel:'по запросу',  desc:'Различные материалы и оформление.' },
+    { code:'PROD-PLAQUE',      name:'Памятная табличка',  cat:'Памятные',      ico:'🪦',  price:1800, priceLabel:'от 1 800 ₽', desc:'Гравировка по индивидуальному макету.' }
+  ];
+  var CATS = ['Венки и цветы', 'Атрибутика', 'Памятные'];
+
+  var grid    = document.getElementById('prod-grid');
+  var chipsBox= document.getElementById('prod-chips');
+  var search  = document.getElementById('prod-search');
+  var sortSel = document.getElementById('prod-sort');
+
+  function esc(v){
+    if (v === null || v === undefined) return '';
+    return String(v).replace(/[&<>"']/g, function(c){
+      return c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':c==='"'?'&quot;':'&#39;';
+    });
+  }
+  function activeCat(){ var a = chipsBox.querySelector('.chip.active'); return a ? (a.getAttribute('data-cat') || '') : ''; }
+
+  function sortRows(rows){
+    var by = sortSel.value;
+    if (by === 'price-asc' || by === 'price-desc'){
+      var priced   = rows.filter(function(p){ return p.price > 0; });
+      var onRequest= rows.filter(function(p){ return !(p.price > 0); });
+      priced.sort(function(a, b){ return by === 'price-asc' ? a.price - b.price : b.price - a.price; });
+      return priced.concat(onRequest);
+    }
+    if (by === 'name-asc'){
+      return rows.slice().sort(function(a, b){ return a.name.localeCompare(b.name, 'ru'); });
+    }
+    return rows;
+  }
+
+  function render(){
+    var q = (search.value || '').trim().toLowerCase();
+    var cat = activeCat();
+    var rows = PRODUCTS.filter(function(p){
+      var okCat = !cat || p.cat === cat;
+      var okQ = !q || p.name.toLowerCase().indexOf(q) >= 0 || p.code.toLowerCase().indexOf(q) >= 0;
+      return okCat && okQ;
+    });
+    rows = sortRows(rows);
+    if (!rows.length){ grid.innerHTML = '<p class="page-sub">Ничего не найдено.</p>'; return; }
+    grid.innerHTML = rows.map(function(p){
+      return '<article class="svc">' +
+        '<div class="svc-head"><span class="svc-ico">' + p.ico + '</span><span class="svc-tag">' + esc(p.cat) + '</span></div>' +
+        '<div class="svc-body"><h4>' + esc(p.name) + '</h4><p>' + esc(p.desc) + '</p></div>' +
+        '<div class="foot"><span class="price">' + esc(p.priceLabel) + '</span>' +
+        '<button class="btn btn-sm btn-primary cart-add" data-code="' + esc(p.code) + '" data-name="' + esc(p.name) + '" data-price="' + p.price + '">В корзину</button>' +
+        '</div></article>';
+    }).join('');
+  }
+
+  function buildChips(){
+    chipsBox.innerHTML = '<span class="chip active" data-cat="">Все</span>' +
+      CATS.map(function(c){ return '<span class="chip" data-cat="' + esc(c) + '">' + esc(c) + '</span>'; }).join('');
+    chipsBox.querySelectorAll('.chip').forEach(function(ch){
+      ch.addEventListener('click', function(){
+        chipsBox.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('active'); });
+        ch.classList.add('active');
+        render();
+      });
+    });
+  }
+
+  buildChips();
+  search.addEventListener('input', render);
+  sortSel.addEventListener('change', render);
+  render();
+})();
+</script>
 <script src="assets/js/app.js"></script>
 <script src="assets/js/cart.js"></script>
 </body>
