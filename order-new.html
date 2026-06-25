@@ -79,10 +79,10 @@
     if(!SVC.length){ box.innerHTML = '<div class="list-row"><span class="t-muted">Каталог пуст.</span></div>'; return; }
     box.innerHTML = SVC.map(function(s, i){
       return '<div class="list-row" style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
-        '<span style="display:flex;align-items:flex-start;gap:8px;flex:1">' +
+        '<label style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer">' +
         '<input type="checkbox" class="svc-cb" data-idx="'+i+'" data-code="'+esc(s.code)+'" data-name="'+esc(s.name)+'" data-price="'+esc(s.base_price)+'">' +
         '<span><b>'+esc(s.name)+'</b><br><span class="t-muted t-mono">'+esc(s.code)+' · '+fmt(s.base_price)+'</span></span>' +
-        '</span>' +
+        '</label>' +
         '<input type="number" min="1" value="1" class="svc-qty input" data-for="'+i+'" style="width:60px;text-align:center" disabled>' +
         '</div>';
     }).join('');
